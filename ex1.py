@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.io
 from scipy.io import loadmat
+from display import display_eigenvectors, display_single_image
 
 INPUT_PATH = 'data/face.mat'
 TRAINING_SPLIT = 0.7
@@ -16,7 +17,7 @@ def import_processing(data):
     X = split_data(X)
     means = [np.mean(x, axis=1) for x in X]
     data = [(x - means[i][..., None]) for i, x in enumerate(X)]
-    return data
+    return data, means
 
 
 def split_data(X):
@@ -49,8 +50,9 @@ def find_eigenvectors(S, how_many=-1):
 
 
 
-X = import_processing(INPUT_PATH)
+X, means = import_processing(INPUT_PATH)
+
 # On training data
 S = compute_S(X[0])
-eig = find_eigenvectors(S)
-print(eig)
+eig = find_eigenvectors(S, 30)
+display_eigenvectors(eig[1])

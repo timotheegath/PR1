@@ -3,20 +3,28 @@ import matplotlib.pyplot as plt
 from scipy.io import loadmat
 import cv2
 
-faces = loadmat('data/face.mat')
-print(faces.keys())
-print(faces['X'])
-print(faces['X'].shape)
-print(faces['l'])
-print(faces['l'].shape)
-print(np.unique(faces['l'], return_counts=True))
 
-X = np.reshape(faces['X'], (46, 56, 520))
 
-for i in range(520):
+def display_single_image(X):
 
-    cv2.imshow('Face {}'.format(i), cv2.resize(X[..., i].transpose(), dsize=(460, 560), interpolation=cv2.INTER_LINEAR))
+    X = np.reshape(X, (56, 46))
+    cv2.imshow('Single face', X)
     cv2.waitKey()
-    cv2.destroyAllWindows()
 
-print(X.shape)
+def display_eigenvectors(vecs):
+    # 10 images a column
+    vecs = np.abs(vecs)
+
+    how_many = vecs.shape[0]
+    rows = how_many // 10
+    pics = np.zeros((56*rows, 46*10), dtype=np.uint8)
+    number = 0
+    for i in range(rows):
+        for j in range(10):
+            print(np.min(vecs[number]), np.max(vecs[number]))
+            pics[i:i+56, j:j+46] = np.reshape(vecs[number, :], (56, 46))/np.max(vecs[number]) * 255
+            number += 1
+            if number == how_many:
+                break
+    cv2.imshow('Eigenvectors', pics)
+    cv2.waitKey()
