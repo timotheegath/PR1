@@ -1,0 +1,31 @@
+name: PR1
+channels:
+  - defaults
+dependencies:
+  - blas=1.0=mkl
+  - certifi=2018.10.15=py37_0
+  - hdf5=1.8.20=hac2f561_1
+  - icc_rt=2017.0.4=h97af966_0
+  - intel-openmp=2019.0=118
+  - jpeg=9b=hb83a4c4_2
+  - libopencv=3.4.2=h20b85fd_0
+  - libpng=1.6.35=h2a8f88b_0
+  - libtiff=4.0.9=h36446d0_2
+  - mkl=2019.0=118
+  - mkl_fft=1.0.6=py37hdbbee80_0
+  - mkl_random=1.0.1=py37h77b88f5_1
+  - numpy=1.15.2=py37ha559c80_0
+  - numpy-base=1.15.2=py37h8128ebf_0
+  - opencv=3.4.2=py37h40b0b35_0
+  - pip=10.0.1=py37_0
+  - py-opencv=3.4.2=py37hc319ecb_0
+  - python=3.7.0=hea74fb7_0
+  - scipy=1.1.0=py37h4f6bf74_1
+  - setuptools=40.4.3=py37_0
+  - vc=14.1=h0510ff6_4
+  - vs2015_runtime=14.15.26706=h3a45250_0
+  - wheel=0.32.2=py37_0
+  - wincertstore=0.2=py37_0
+  - zlib=1.2.11=h8395fce_2
+prefix: C:\Users\timog\Miniconda3\envs\PR1
+
