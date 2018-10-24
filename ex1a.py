@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.io
 from scipy.io import loadmat
-from in_out import display_eigenvectors, display_single_image, save_image, save_values
+from in_out import display_eigenvectors, display_single_image, save_image, save_values, load_arrays
 
 INPUT_PATH = 'data/face.mat'
 TRAINING_SPLIT = 0.7
@@ -48,10 +48,12 @@ def find_eigenvectors(S, how_many=-1):
 
     return sorted_eigvalues[0:how_many], sorted_eigvectors[:, 0:how_many]
 
+# Only run this if main file and not import
 
-save_values({'arrayA': np.zeros((5,6)), 'ArrayB': np.zeros((6,6))})
-X, means = import_processing(INPUT_PATH)
-# On training data
-S = compute_S(X[0])
-eig = find_eigenvectors(S, 30)
-display_eigenvectors(eig[1])
+
+if __name__ == '__main__':
+    X, means = import_processing(INPUT_PATH)
+    # On training data
+    S = compute_S(X[0])
+    eig = find_eigenvectors(S, 30)
+    display_eigenvectors(eig[1])

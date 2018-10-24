@@ -1,9 +1,9 @@
 import numpy as np
 import os, sys
-import scipy.io as scio
+
 import __main__ as main
 import matplotlib.pyplot as plt
-from scipy.io import loadmat
+from scipy.io import loadmat, savemat
 import cv2
 
 
@@ -73,7 +73,17 @@ def save_values(values_dic):  # Feed a dictionary with all arrays in it
     name = "_".join(values_dic.keys())
 
     path = os.path.join('results', caller, name)  # Path where image will be saved
-    scio.savemat(path, values_dic)
+    savemat(path, values_dic)
+
+
+def load_arrays(question_number): # Load all results from a previous question
+    path = os.path.join('results', 'ex{}'.format(question_number))
+    out_dic = {}
+    files = os.listdir(path)  # List all the files in the directory
+    mat_files = [f for f in files if '.mat' in f] # only keep mat files
+    for f in mat_files:
+        loadmat(os.path.join(path, f), mdict=out_dic)
+    return out_dic
 
 
 if __name__ == '__main__':
