@@ -11,10 +11,11 @@ TRAINING_SPLIT = 0.7
 def import_processing(data):
 
     faces = loadmat(data)
+
     X = np.reshape(faces['X'], (46*56, 10, 52))
-    X = X.transpose()
 
     X = split_data(X)
+
     means = [np.mean(x, axis=1) for x in X]
     data = [(x - means[i][..., None]) for i, x in enumerate(X)]
     return data, means
@@ -26,12 +27,13 @@ def split_data(X):
     test_data = np.reshape(X[..., int(TRAINING_SPLIT*10):, :], (46*56, -1))
     data = [training_data, test_data]
 
+
     return data
 
 def compute_S(data):
 
     N = data.shape[1]
-    S = np.cov(data)/N
+    S = np.cov(data, bias=True)
     return S
 
 
@@ -44,14 +46,10 @@ def find_eigenvectors(S, how_many=-1):
     sorted_eigvalues = eigvalues[indices]
     sorted_eigvectors = eigvectors[:, indices]
 
-    return (sorted_eigvalues[0:how_many], sorted_eigvectors[0:how_many])
-
-
-
+    return (sorted_eigvalues[0:how_many], sorted_eigvectors[:, 0:how_many])
 
 
 X, means = import_processing(INPUT_PATH)
-
 # On training data
 S = compute_S(X[0])
 eig = find_eigenvectors(S, 30)
