@@ -61,12 +61,9 @@ if __name__ == '__main__':
     X, means = import_processing(INPUT_PATH)
     # On training data
     S = compute_S(X[0])
-    eig = find_eigenvectors(S)
-    eigenfaces = display_eigenvectors(eig[1][:, :30])
+    eig = find_eigenvectors(S, 30)
+    eigenfaces = display_eigenvectors(eig[1])
     count = count_non_zero(eig[0])
-    save_image({'eigenfaces': eigenfaces, 'mean_image': np.reshape(means[0], (46, 56)).transpose()})
+    save_image({'eigenfaces': eigenfaces})
     save_dict = {'eigVal':eig[0], 'eigVec': eig[1], 'meanImage': means[0], 'nonZeroEig': count}
     save_values(save_dict)
-    print('Found {} non-zero eigenvalues'.format(count))
-
-    #  To decide how many eigenvectors we actually need, we'll have to measure error ?
