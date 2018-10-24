@@ -66,9 +66,7 @@ if __name__ == '__main__':
     save_image({'eigenfaces': eigenfaces})
     save_dict = {'eigVal':eig[0], 'eigVec': eig[1], 'meanImage': means[0], 'nonZeroEig': count}
     save_values(save_dict)
-
-
+    
     print('Found {} non-zero eigenvalues'.format(count))
 
     # To determine how many eigenvectors we need, measure reconstruction accuracy ?
-
