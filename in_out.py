@@ -76,11 +76,11 @@ def save_values(values_dic):  # Feed a dictionary with all arrays in it
     savemat(path, values_dic)
 
 
-def load_arrays(question_number): # Load all results from a previous question
+def load_arrays(question_number):  # Load all mat arrays from a previous question
     path = os.path.join('results', 'ex{}'.format(question_number))
     out_dic = {}
     files = os.listdir(path)  # List all the files in the directory
-    mat_files = [f for f in files if '.mat' in f] # only keep mat files
+    mat_files = [f for f in files if '.mat' in f]  # only keep mat files
     for f in mat_files:
         loadmat(os.path.join(path, f), mdict=out_dic)
     return out_dic
