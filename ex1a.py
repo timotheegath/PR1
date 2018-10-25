@@ -32,8 +32,8 @@ def split_data(X):
 
 def compute_S(data):
 
-    N = data.shape[1]
-    S = np.cov(data, bias=True)
+    N = data.shape[1] # Not needed
+    S = np.cov(data, bias=True) # Normalises by N
     return S
 
 
@@ -61,10 +61,11 @@ if __name__ == '__main__':
     X, means = import_processing(INPUT_PATH)
     S = compute_S(X[0])
     eig = find_eigenvectors(S, 30)
+    print(eig[1].shape)
     eigenfaces = display_eigenvectors(eig[1])
     count = count_non_zero(eig[0])
     save_image({'eigenfaces': eigenfaces})
-    save_dict = {'eigVal':eig[0], 'eigVec': eig[1], 'meanImage': means[0], 'nonZeroEig': count}
+    save_dict = {'processedData': X[0], 'eigVal': eig[0], 'eigVec': eig[1], 'meanImage': means[0], 'nonZeroEig': count}
     save_values(save_dict)
     
     print('Found {} non-zero eigenvalues'.format(count))
