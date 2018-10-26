@@ -3,10 +3,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.io
 from scipy.io import loadmat
+from scipy import spatial
+from sklearn.preprocessing import normalize
+
 from in_out import display_eigenvectors, display_single_image, save_image, save_values, load_arrays
 
 INPUT_PATH = 'data/face.mat'
 TRAINING_SPLIT = 0.7
+NUMBER_PEOPLE = 52
+
 
 
 def import_processing(data):
@@ -59,16 +64,48 @@ def count_non_zero(eigenvalues):
 
 def find_projection(eigenvectors, faces):  # eigenvectors and faces in vector form
 
-    coeffs = np.matmul(faces.transpose(), eigenvectors)
-
+    coeffs = np.matmul(faces.transpose(), eigenvectors).transpose()
+    # number_of_eigenvectors X Faces
     return coeffs
+
+def find_reference_coeffs(eigenvectors, faces):
+
+    coeffs = find_projection(eigenvectors, faces)
+    # There are 7 images per individual:
+    coeffs_sequence = np.split(coeffs, 7, axis=1)
+    stacked_sequence = np.stack(coeffs_sequence, axis=2)
+    coeffs_per_individual = np.mean(stacked_sequence, axis=2)
+    # number of eigenvectors X number of individuals
+
+    return coeffs_per_individual
 
 
 def reconstruct(eigenvectors, coeffs, mean):
 
-    reconstructions = mean[:, None] + np.matmul(eigenvectors, coeffs.transpose())
+    reconstructions = mean[:, None] + np.matmul(eigenvectors, coeffs)
 
     return reconstructions
+
+
+def recognize(reference, to_classify, eigenvectors):
+    coeffs_to_classify = np.real(find_projection(eigenvectors, to_classify))
+    coeffs_to_classify = normalize(coeffs_to_classify.transpose(), 'l2').transpose()
+    reference = normalize(reference.transpose(), 'l2').transpose()
+    dot_products = np.matmul(coeffs_to_classify.transpose(), reference)
+
+    # number of faces to classify X number of reference individuals
+    who_is_it = np.argmax(dot_products, axis=1)
+    print(who_is_it.shape)
+    # Returns the vector where each picture is assigned a number
+    return who_is_it
+
+
+def accuracy_measurement(ground_truth, results):
+
+    right = (ground_truth == results)
+    accuracy = (right[right.nonzero()].shape[0])/(ground_truth.shape[0])
+
+    return accuracy
 
 
 def measure_reconstruct_error(originals, reconstructions):
@@ -94,26 +131,30 @@ if __name__ == '__main__':
     for i in range(1, count, 1):
 
         coeffs = find_projection(eig[1][:, :i], X[1])  # On test data
-        reconstructed_image = reconstruct(eig[1][:, :i], coeffs, means[1])
-        errors = measure_reconstruct_error(X[1] + means[1][:, None], reconstructed_image)
-
-        error_var = np.var(errors)
-        error_mean = np.mean(errors)
-        error_vars.append(error_var)
+        # reconstructed_image = reconstruct(eig[1][:, :i], coeffs, means[1])
+        # errors = measure_reconstruct_error(X[1] + means[1][:, None], reconstructed_image)
+        ref_coeffs = np.real(find_reference_coeffs(eig[1][:, :i], X[0]))
+        who_is_it = recognize(ref_coeffs, X[1], eig[1][:, :i])
+        true_individual_index = np.linspace(0,NUMBER_PEOPLE)
+        true_individual_index = np.repeat(true_individual_index[:, None], 3, axis=1).reshape(-1, 1)
+        accuracy = accuracy_measurement(true_individual_index, who_is_it)
+        # error_var = np.var(errors)
+        error_mean = np.mean(accuracy)
+        # error_vars.append(error_var)
         error_means.append(error_mean)
         # update plot
         plt.subplot(211)
         plt.plot(error_means)
         plt.title('Mean reconstruction error against number of eigenvectors')
 
-        plt.subplot(212)
-        plt.plot(error_vars)
-        plt.title('Variance of reconstruction error on training images \nagainst number'
-                  'of eigenvectors')
+        # plt.subplot(212)
+        # plt.plot(error_vars)
+        # plt.title('Variance of reconstruction error on training images \nagainst number'
+        #           'of eigenvectors')
         plt.show(block=False)
         plt.pause(0.01)
 
     # To do: The error is in a random unit, may be make it percentage ? Same for variance
 
-    save_dict = {'reconst_error_mean': error_means, 'reconst_error_var': error_vars}
-    save_values(save_dict)
+    # save_dict = {'reconst_error_mean': error_means, 'reconst_error_var': error_vars}
+    # save_values(save_dict)
