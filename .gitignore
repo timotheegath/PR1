@@ -2,3 +2,6 @@ out
 .*
 results
 
+*.xml
+*.xml
+*.pyc

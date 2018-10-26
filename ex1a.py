@@ -51,23 +51,69 @@ def find_eigenvectors(S, how_many=-1):
 
 def count_non_zero(eigenvalues):
 
-    boolean_mask = eigenvalues.nonzero()  # Mask of same shape as vector which is True if value is non zero
+    # boolean_mask = eigenvalues.nonzero()  # Mask of same shape as vector which is True if value is non zero
+    boolean_mask = eigenvalues > 0.00001 # not really non-zero
     remaining_values = eigenvalues[boolean_mask]  # Only keep non-zero values
     return remaining_values.shape[0]  # How many left ?
-# Only run this if main file and not import
 
+
+def find_projection(eigenvectors, faces):  # eigenvectors and faces in vector form
+
+    coeffs = np.matmul(faces.transpose(), eigenvectors)
+
+    return coeffs
+
+
+def reconstruct(eigenvectors, coeffs, mean):
+
+    reconstructions = mean[:, None] + np.matmul(eigenvectors, coeffs.transpose())
+
+    return reconstructions
+
+
+def measure_reconstruct_error(originals, reconstructions):
+
+    return np.linalg.norm(originals - reconstructions, ord=2, axis=0)
 
 if __name__ == '__main__':
     X, means = import_processing(INPUT_PATH)
     S = compute_S(X[0])
-    eig = find_eigenvectors(S, 30)
-    print(eig[1].shape)
-    eigenfaces = display_eigenvectors(eig[1])
-    count = count_non_zero(eig[0])
-    save_image({'eigenfaces': eigenfaces})
-    save_dict = {'processedData': X[0], 'eigVal': eig[0], 'eigVec': eig[1], 'meanImage': means[0], 'nonZeroEig': count}
-    save_values(save_dict)
-    
-    print('Found {} non-zero eigenvalues'.format(count))
+    eig = find_eigenvectors(S, -1) # Compute all eigenvectors
 
-    # To determine how many eigenvectors we need, measure reconstruction accuracy ?
+    # eigenfaces = display_eigenvectors(eig[1])
+    count = count_non_zero(eig[0])
+    # save_image({'eigenfaces': eigenfaces})
+    # save_dict = {'processedData': X[0], 'eigVal': eig[0], 'eigVec': eig[1], 'meanImage': means[0], 'nonZeroEig': count}
+    # save_values(save_dict)
+
+    print('Found {} non-zero eigenvalues'.format(count))
+    error_vars = []
+    error_means = []
+    plt.figure(1)
+
+    for i in range(1, count, 1):
+
+        coeffs = find_projection(eig[1][:, :i], X[1])  # On test data
+        reconstructed_image = reconstruct(eig[1][:, :i], coeffs, means[1])
+        errors = measure_reconstruct_error(X[1] + means[1][:, None], reconstructed_image)
+
+        error_var = np.var(errors)
+        error_mean = np.mean(errors)
+        error_vars.append(error_var)
+        error_means.append(error_mean)
+        # update plot
+        plt.subplot(211)
+        plt.plot(error_means)
+        plt.title('Mean reconstruction error against number of eigenvectors')
+
+        plt.subplot(212)
+        plt.plot(error_vars)
+        plt.title('Variance of reconstruction error on training images \nagainst number'
+                  'of eigenvectors')
+        plt.show(block=False)
+        plt.pause(0.01)
+
+    # To do: The error is in a random unit, may be make it percentage ? Same for variance
+
+    save_dict = {'reconst_error_mean': error_means, 'reconst_error_var': error_vars}
+    save_values(save_dict)
