@@ -1,7 +1,6 @@
 out
 .*
-results
-
+results/*
 *.xml
 *.xml
 *.pyc
