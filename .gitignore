@@ -1,6 +1,6 @@
 out
-.*
-results/*
-*.xml
+results
 *.xml
 *.pyc
+__pycache__
+
