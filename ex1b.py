@@ -2,34 +2,25 @@ import numpy as np
 from ex1a import find_eigenvectors, compute_S
 from in_out import load_arrays
 from sklearn.preprocessing import normalize
+from in_out import display_eigenvectors
 
-
-def matrix_on_column(column, matrix):
-
-    return matrix.dot(column)
-
-
-# High dim computation (S = 1/N * A(A^t) -> D*D)
 previous_data = load_arrays('1a')
-high_dim_eigVal = previous_data['eigVal']
-high_dim_eigVec = np.real(previous_data['eigVec'])
+training_data = previous_data['processedData']  # training_data dimension is 2576, 364 -> each image is column vector of
+                                                #  pixels(46, 56)
+high_eigvals = previous_data['eigVal']
+high_eigvecs = previous_data['eigVec']
 
-# Low dim computation ((A^t)A -> N*N)
-data = previous_data['processedData']
+matrix_AtA = np.matmul(training_data.transpose(), training_data)
+eigvalues, eigvectors = np.linalg.eig(matrix_AtA)
+low_eigvectors = np.matmul(training_data, eigvectors)  #low_eigvectors dimension is 2576, 364
+indices = np.flip(np.argsort(eigvalues), axis=0) # Gives original indices after sorting
+sorted_eigvalues = eigvalues[indices]
+low_eigvectors = low_eigvectors[:, indices]
+#norm = np.linalg.norm(low_eigvectors, axis=0, ord=2)[None, :]
 
-low_dim_S = compute_S(data.transpose())  # Not really S (covariance matrix) -> it's (A^t)A
-low_dim_eig = find_eigenvectors(low_dim_S)  # Eig of (A^t)A
-eig_Vec = np.apply_along_axis(matrix_on_column, 0, low_dim_eig[1], data)  # eigVec(S)[i] = A * (eigVec(A^t)A)[i] ->
-# applies the data matrix on each eiganvector, to get the eiganvector of S
-#eig_Vec = normalize(eig_Vec)
+low_eigvectors = low_eigvectors/np.linalg.norm(low_eigvectors, axis=0)[None, :]
 
-print(eig_Vec.shape)
-print(high_dim_eigVec.shape)
-
-
-print(eig_Vec[:, 0])
-print(high_dim_eigVec[:, 0])
-
-# Shapes are good
-
-# Not so good -> Sorting may be an issue (The original eiganvectors are D*D, the low dim eiganvectors are N*N)
+high_eigvecs = high_eigvecs/np.linalg.norm(high_eigvecs, axis=0)[None, :]
+print(np.linalg.norm(high_eigvecs, axis=0))
+difference = np.matmul(high_eigvecs[..., :364 ], low_eigvectors.transpose())
+print(difference)
