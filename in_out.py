@@ -25,7 +25,7 @@ def respan_eigenface(face):
 
 
 def display_eigenvectors(vecs):
-    # 10 images a column
+    # 10 images a row
     vecs = np.real(vecs)
     how_many = vecs.shape[1]
     rows = how_many // 10
