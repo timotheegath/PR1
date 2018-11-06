@@ -32,13 +32,19 @@ def confusion_matrix(ground_truth, prediction, res=80):
 
     res = NUMBER_PEOPLE * res
     matrix = np.zeros((ground_truth.shape[0], NUMBER_PEOPLE, NUMBER_PEOPLE), dtype=np.float32)
+    big_matrix = np.zeros((res, res), dtype=np.float32)
+    small_index = np.floor(np.linspace(0, NUMBER_PEOPLE**2, res**2, endpoint=False)).astype(np.uint16)
+    big_index = np.arange(0, res**2)
     for i in range(ground_truth.shape[0]):
         matrix[i, ground_truth[i], prediction[i]] = 1
     matrix = np.sum(matrix, axis=0)
     matrix /= 3
+    print(np.max(small_index), np.max(big_index))
+    big_matrix.flatten()[big_index] = matrix.flatten()[small_index]
+
     # matrix = cv2.resize(matrix, dsize=(res,res), interpolation=cv2.INTER_LINEAR)
 
-    return 1 - matrix
+    return 1 - big_matrix.reshape((res, res))
 
 def bool_and_accuracy(ground_truth, prediction):
 
