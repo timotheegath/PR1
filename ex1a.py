@@ -141,8 +141,8 @@ if __name__ == '__main__':
     # eigenfaces = display_eigenvectors(eig[1])
     count = count_non_zero(eig[0])
     # save_image({'eigenfaces': eigenfaces})
-    # save_dict = {'processedData': X[0], 'eigVal': eig[0], 'eigVec': eig[1], 'meanImage': means[0], 'nonZeroEig': count}
-    # save_values(save_dict)
+    save_dict = {'processedData': X[0], 'eigVal': eig[0], 'eigVec': eig[1], 'meanImage': means[0], 'nonZeroEig': count}
+    save_values(save_dict)
 
     print('Found {} non-zero eigenvalues'.format(count))
     error_vars = []
