@@ -34,23 +34,23 @@ else :
     high_eigvals, high_eigvecs = find_eigenvectors(compute_S(training_data), -1)
 
 
+if __name__ == '__main__':
+    difference = np.matmul(high_eigvecs[..., :364 ].transpose(), low_eigvecs)
+    print(difference)
+    eigenvalue_difference = high_eigvals[:364] - low_eigvalues
+    print(np.min(eigenvalue_difference), np.max(eigenvalue_difference), np.mean(eigenvalue_difference))
+    plt.figure(1)
+    plt.subplot(311)
+    plt.scatter(np.arange(0, low_eigvalues.shape[0]), low_eigvalues, c='b', marker='o')
+    plt.scatter(np.arange(0, low_eigvalues.shape[0]), high_eigvals[:364], c='r', marker='x')
+    plt.legend(['Low-dimensional computation', 'High-dimensional computation'])
+    plt.title('Eigenvalues of data')
+    plt.subplot(312)
+    plt.title('Difference between the computation of eigenvalues')
+    plt.scatter(np.arange(0, low_eigvalues.shape[0]), eigenvalue_difference, marker='+')
 
-difference = np.matmul(high_eigvecs[..., :364 ].transpose(), low_eigvecs)
-print(difference)
-eigenvalue_difference = high_eigvals[:364] - low_eigvalues
-print(np.min(eigenvalue_difference), np.max(eigenvalue_difference), np.mean(eigenvalue_difference))
-plt.figure(1)
-plt.subplot(311)
-plt.scatter(np.arange(0, low_eigvalues.shape[0]), low_eigvalues, c='b', marker='o')
-plt.scatter(np.arange(0, low_eigvalues.shape[0]), high_eigvals[:364], c='r', marker='x')
-plt.legend(['Low-dimensional computation', 'High-dimensional computation'])
-plt.title('Eigenvalues of data')
-plt.subplot(312)
-plt.title('Difference between the computation of eigenvalues')
-plt.scatter(np.arange(0, low_eigvalues.shape[0]), eigenvalue_difference, marker='+')
-
-diag = np.eye(low_eigvalues.shape[0]).astype(np.bool_)
-plt.subplot(313)
-plt.title('Dot product of normalized eigenvectors between the two computations')
-plt.scatter(np.arange(0, low_eigvalues.shape[0]), difference[diag], marker='+')
-plt.show()
+    diag = np.eye(low_eigvalues.shape[0]).astype(np.bool_)
+    plt.subplot(313)
+    plt.title('Dot product of normalized eigenvectors between the two computations')
+    plt.scatter(np.arange(0, low_eigvalues.shape[0]), difference[diag], marker='+')
+    plt.show()

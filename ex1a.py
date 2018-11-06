@@ -41,6 +41,7 @@ def compute_S(data, low_res=False):
     if low_res:
         data = data.transpose()
     S = np.matmul(data, data.transpose()) / N # Normalises by N
+
     return S
 
 
@@ -82,12 +83,26 @@ def find_reference_coeffs(eigenvectors, faces):
     return coeffs
 
 
-def reconstruct(eigenvectors, coeffs, mean):
 
-    reconstructions = mean[:, None] + np.matmul(eigenvectors, coeffs)
 
-    return reconstructions
+def accuracy_measurement(ground_truth, results):
 
+    right = (ground_truth == results)
+    accuracy = (right[right].shape[0])/(ground_truth.shape[0])
+
+    return accuracy
+
+
+def measure_reconstruct_error(originals, reconstructions):
+
+    return np.linalg.norm(originals - reconstructions, ord=2, axis=0)
+
+
+def regroup(ref_coeffs):
+
+    clusters, labels, _= k_means(ref_coeffs.transpose(), n_clusters=NUMBER_PEOPLE, verbose=False)
+    unique, index, counts = np.unique(labels, return_counts=True, return_index=True)
+    return clusters.transpose()
 
 def recognize(reference, to_classify, eigenvectors):
 
@@ -111,28 +126,6 @@ def recognize(reference, to_classify, eigenvectors):
         print(who_is_it.shape)
         # Returns the vector where each picture is assigned a number
     return who_is_it
-
-
-def accuracy_measurement(ground_truth, results):
-
-    right = (ground_truth == results)
-    accuracy = (right[right].shape[0])/(ground_truth.shape[0])
-
-    return accuracy
-
-
-def measure_reconstruct_error(originals, reconstructions):
-
-    return np.linalg.norm(originals - reconstructions, ord=2, axis=0)
-
-
-def regroup(ref_coeffs):
-
-    clusters, labels, _= k_means(ref_coeffs.transpose(), n_clusters=NUMBER_PEOPLE, verbose=False)
-    unique, index, counts = np.unique(labels, return_counts=True, return_index=True)
-    return clusters.transpose()
-
-
 
 
 if __name__ == '__main__':
