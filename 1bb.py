@@ -13,12 +13,21 @@ from in_out import display_eigenvectors
 import time
 
 
+def classify(projections_training, projections_test):
+
+    distances = []
+    for i in range(projections_test.shape[1]):
+        distances.append(np.linalg.norm(projections_training - projections_test[:, i][:, None], axis=0))
+    return np.floor(np.argmin(np.array(distances), axis=1)/7).astype(np.uint16)
+
 
 if __name__ == '__main__':
 
     [training_data, testing_data], means = import_processing(INPUT_PATH)
-    eigenvalues, eigenvectors = find_eigenvectors(compute_S(training_data, low_res=True))
+    eigenvalues, eigenvectors = find_eigenvectors(compute_S(training_data, low_res=True), -1)
     eigenvectors = retrieve_low_eigvecs(eigenvectors, training_data)
     projections_training, projections_test = find_projection(eigenvectors, training_data),\
                                              find_projection(eigenvectors, testing_data)
+    recognised_faces = classify(projections_training, projections_test)
+    print(recognised_faces)
     
