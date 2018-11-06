@@ -31,10 +31,12 @@ def identify_success(bool_a, number=10):
 def confusion_matrix(ground_truth, prediction, res=80):
 
     res = NUMBER_PEOPLE * res
-    matrix = np.zeros((NUMBER_PEOPLE, NUMBER_PEOPLE), dtype=np.float32)
-    matrix[ground_truth, prediction] += 1
+    matrix = np.zeros((ground_truth.shape[0], NUMBER_PEOPLE, NUMBER_PEOPLE), dtype=np.float32)
+    for i in range(ground_truth.shape[0]):
+        matrix[i, ground_truth[i], prediction[i]] = 1
+    matrix = np.sum(matrix, axis=0)
     matrix /= 3
-    matrix = cv2.resize(matrix, dsize=(res,res), interpolation=cv2.INTER_LINEAR)
+    # matrix = cv2.resize(matrix, dsize=(res,res), interpolation=cv2.INTER_LINEAR)
 
     return 1 - matrix
 
@@ -72,14 +74,16 @@ if __name__ == '__main__':
     recognised_faces = classify(projections_training, projections_test)
 
     true_faces = create_ground_truth()
+
     bool_recognised, accuracy = bool_and_accuracy(true_faces, recognised_faces)
-    conf_matrix = confusion_matrix(true_faces, recognised_faces, res=30)*255
+    conf_matrix = confusion_matrix(true_faces, recognised_faces, res=20)*255
 
-    print(accuracy)
+    # print(accuracy)
 
 
-    # cv2.imshow('Confusion matrix', conf_matrix)
-    # cv2.waitKey()
+    cv2.imshow('Confusion matrix', conf_matrix)
+    cv2.waitKey()
+    print(np.unique(conf_matrix))
 
-    print(recognised_faces)
-    print(bool_recognised)
+    # print(recognised_faces)
+    # print(bool_recognised)
