@@ -11,6 +11,8 @@ from ex1a import find_eigenvectors, find_projection, import_processing, INPUT_PA
 from ex1b import retrieve_low_eigvecs
 from in_out import display_eigenvectors
 import time
+import cv2
+
 
 NUMBER_OF_EIGENVECTORS = -1
 
@@ -26,9 +28,9 @@ def identify_success(bool_a, number=10):
     indices = np.flip(np.argsort(bool_a), axis=0)  # Gives original indices after sorting
     return indices[:number]
 
-def confusion_matrix(ground_truth, prediction, res=(80, 80)):
+def confusion_matrix(ground_truth, prediction, res=80):
 
-    res = res * NUMBER_PEOPLE * (1-TRAINING_SPLIT)*10
+    res = int(res * NUMBER_PEOPLE * (1-TRAINING_SPLIT)*10)
     matrix = np.zeros((res, res), dtype=np.float32)
     matrix[ground_truth, prediction] += 1
     matrix /= 3
@@ -66,5 +68,14 @@ if __name__ == '__main__':
     projections_training, projections_test = find_projection(eigenvectors, training_data),\
                                              find_projection(eigenvectors, testing_data)
     recognised_faces = classify(projections_training, projections_test)
-    print(recognised_faces)
+    true_faces = create_ground_truth()
+    bool_recognised, accuracy = bool_and_accuracy(true_faces, recognised_faces)
+    conf_matrix = confusion_matrix(true_faces, recognised_faces, res=30)*255
 
+    print(accuracy)
+
+    # cv2.imshow('Confusion matrix', conf_matrix)
+    # cv2.waitKey()
+
+    print(recognised_faces)
+    print(bool_recognised)
