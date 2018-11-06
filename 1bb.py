@@ -30,10 +30,12 @@ def identify_success(bool_a, number=10):
 
 def confusion_matrix(ground_truth, prediction, res=80):
 
-    res = int(res * NUMBER_PEOPLE * (1-TRAINING_SPLIT)*10)
-    matrix = np.zeros((res, res), dtype=np.float32)
+    res = NUMBER_PEOPLE * res
+    matrix = np.zeros((NUMBER_PEOPLE, NUMBER_PEOPLE), dtype=np.float32)
     matrix[ground_truth, prediction] += 1
     matrix /= 3
+    matrix = cv2.resize(matrix, dsize=(res,res), interpolation=cv2.INTER_LINEAR)
+
     return 1 - matrix
 
 def bool_and_accuracy(ground_truth, prediction):
@@ -68,11 +70,13 @@ if __name__ == '__main__':
     projections_training, projections_test = find_projection(eigenvectors, training_data),\
                                              find_projection(eigenvectors, testing_data)
     recognised_faces = classify(projections_training, projections_test)
+
     true_faces = create_ground_truth()
     bool_recognised, accuracy = bool_and_accuracy(true_faces, recognised_faces)
     conf_matrix = confusion_matrix(true_faces, recognised_faces, res=30)*255
 
     print(accuracy)
+
 
     # cv2.imshow('Confusion matrix', conf_matrix)
     # cv2.waitKey()
