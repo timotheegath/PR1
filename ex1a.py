@@ -35,10 +35,12 @@ def split_data(X):
     return data
 
 
-def compute_S(data):
+def compute_S(data, low_res=False):
 
-    N = data.shape[1] # Not needed
-    S = np.cov(data, bias=True) # Normalises by N
+    N = data.shape[1]
+    if low_res:
+        data = data.transpose()
+    S = np.matmul(data, data.transpose()) / N # Normalises by N
     return S
 
 

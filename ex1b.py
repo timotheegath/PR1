@@ -24,8 +24,8 @@ if USE_PREVIOUS:
     
 else :
     [training_data, _], means = import_processing(INPUT_PATH)
-    matrix_AtA = np.matmul(training_data.transpose(), training_data)
-    matrix_AtA /= training_data.shape[1]
+    matrix_AtA = compute_S(training_data, low_res=True)
+
     low_eigvalues, fake_low_eigvecs = find_eigenvectors(matrix_AtA, -1)  # Compute all eigenvectors
     low_eigvecs = retrieve_low_eigvecs(fake_low_eigvecs, training_data)  #low_eigvecs dimension is 2576, 364
 
@@ -35,11 +35,22 @@ else :
 
 
 
-difference = np.matmul(high_eigvecs[..., :364 ], low_eigvecs.transpose())
+difference = np.matmul(high_eigvecs[..., :364 ].transpose(), low_eigvecs)
 print(difference)
 eigenvalue_difference = high_eigvals[:364] - low_eigvalues
 print(np.min(eigenvalue_difference), np.max(eigenvalue_difference), np.mean(eigenvalue_difference))
 plt.figure(1)
+plt.subplot(311)
 plt.scatter(np.arange(0, low_eigvalues.shape[0]), low_eigvalues, c='b', marker='o')
 plt.scatter(np.arange(0, low_eigvalues.shape[0]), high_eigvals[:364], c='r', marker='x')
+plt.legend(['Low-dimensional computation', 'High-dimensional computation'])
+plt.title('Eigenvalues of data')
+plt.subplot(312)
+plt.title('Difference between the computation of eigenvalues')
+plt.scatter(np.arange(0, low_eigvalues.shape[0]), eigenvalue_difference, marker='+')
+
+diag = np.eye(low_eigvalues.shape[0]).astype(np.bool_)
+plt.subplot(313)
+plt.title('Dot product of normalized eigenvectors between the two computations')
+plt.scatter(np.arange(0, low_eigvalues.shape[0]), difference[diag], marker='+')
 plt.show()
