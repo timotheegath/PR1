@@ -90,7 +90,7 @@ def classify_Rec(query_images, eigenvectors, means):
 
 
 if __name__ == '__main__':
-    NN = False
+    NN = True
     t1 = time.time()
 
     if NN:
