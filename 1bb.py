@@ -18,15 +18,17 @@ import cv2
 NUMBER_OF_EIGENVECTORS = -1
 
 
-def identify_failure(bool_a, number=10):
+def identify_failure(bool_a, number=-1):
 
-    indices = np.argsort(bool_a)  # Gives original indices after sorting
+    indices = np.argwhere(~bool_a)[:, 0]  # Gives original indices after sorting
+
     return indices[:number]
 
 
-def identify_success(bool_a, number=10):
+def identify_success(bool_a, number=-1):
 
-    indices = np.flip(np.argsort(bool_a), axis=0)  # Gives original indices after sorting
+    indices = np.argwhere(bool_a)[:, 0]  # Gives original indices after sorting
+
     return indices[:number]
 
 def confusion_matrix(ground_truth, prediction, res=80):
@@ -102,8 +104,13 @@ if __name__ == '__main__':
         true_faces = create_ground_truth()
     
         bool_recognised, accuracy = bool_and_accuracy(true_faces, recognised_faces)
+
         conf_matrix = confusion_matrix(true_faces, recognised_faces, res=20)*255
-    
+        failures = identify_failure(bool_recognised)
+
+        display_eigenvectors(testing_data[:, failures]+means[0][:, None])
+        success = identify_success(bool_recognised)
+        display_eigenvectors(testing_data[:, success] + means[0][:, None])
         print(accuracy)
     
     
