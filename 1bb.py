@@ -74,7 +74,7 @@ def classify_Rec(query_images, eigenvectors, means):
     errors = np.zeros((query_images.shape[1], NUMBER_PEOPLE))
     for i, vec in enumerate(eigenvectors):
 
-        projection = np.matmul(query_images.transpose(), vec)
+        projection = np.matmul((query_images-means[i][:, None]).transpose(), vec)
         reconstruction = reconstruct(vec, projection.transpose(), means[i])
         error = np.linalg.norm((reconstruction-query_images + means[i][:, None]), axis=0)  # Mean per class or not ?
         errors[:, i] = error
