@@ -23,7 +23,7 @@ def import_processing(data, class_means=False):
     X = split_data(X)
     if not class_means:
         means = [np.mean(x, axis=1) for x in X]
-        data = [(x - means[i][..., None]) for i, x in enumerate(X)]
+        data = [(x - means[0][..., None]) for i, x in enumerate(X)]
     else:
         x = X[0]
         means = [np.mean(x[:, i*7:(i+1)*7], axis=1) for i in range(NUMBER_PEOPLE)]

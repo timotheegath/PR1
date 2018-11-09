@@ -76,7 +76,7 @@ def classify_Rec(query_images, eigenvectors, means):
 
         projection = np.matmul((query_images-means[i][:, None]).transpose(), vec)
         reconstruction = reconstruct(vec, projection.transpose(), means[i])
-        error = np.linalg.norm((reconstruction-query_images + means[i][:, None]), axis=0)  # Mean per class or not ?
+        error = np.linalg.norm((reconstruction-query_images), axis=0)  # Mean per class or not ?
         errors[:, i] = error
 
     classification = np.argmin(errors, axis=1)
