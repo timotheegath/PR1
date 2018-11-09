@@ -33,7 +33,7 @@ def import_processing(data, class_means=False):
 
             training_data[:, i*7:(i+1)*7] = x[:, i*7:(i+1)*7] - means[i][:, None]
         data = [training_data, X[1]]
-    return data, means
+    return data, [means[0]]
 
 
 def split_data(X):
