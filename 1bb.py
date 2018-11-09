@@ -56,7 +56,7 @@ def bool_and_accuracy(ground_truth, prediction):
 def create_ground_truth():
 
     true_individual_index = np.arange(0, NUMBER_PEOPLE)
-    true_individual_index = np.repeat(true_individual_index[:, None], 3, axis=1).reshape(-1)
+    true_individual_index = np.repeat(true_individual_index[:, None], 10-TRAINING_SPLIT, axis=1).reshape(-1)
     return true_individual_index
 
 
@@ -66,7 +66,7 @@ def classify(projections_training, projections_test):
     distances = []
     for i in range(projections_test.shape[1]):
         distances.append(np.linalg.norm(projections_training - projections_test[:, i][:, None], axis=0))
-    return np.floor(np.argmin(np.array(distances), axis=1)/7).astype(np.uint16)
+    return np.floor(np.argmin(np.array(distances), axis=1)/TRAINING_SPLIT).astype(np.uint16)
 
 def classify_Rec(query_images, eigenvectors, means):
 
@@ -88,7 +88,7 @@ def classify_Rec(query_images, eigenvectors, means):
 
 
 if __name__ == '__main__':
-    NN = True
+    NN = False
     t1 = time.time()
 
     if NN:
@@ -114,8 +114,9 @@ if __name__ == '__main__':
         [training_data, testing_data], means = import_processing(INPUT_PATH, class_means=True)
         eigenvectors = []
         for i in range(NUMBER_PEOPLE):
-            eigv, eigvec = find_eigenvectors(compute_S(training_data[:, i*7:(i+1)*7], low_res=True), -1)
-            eigvec = retrieve_low_eigvecs(eigvec, training_data[:, i*7:(i+1)*7])
+            eigv, eigvec = find_eigenvectors(compute_S(training_data[:, i*TRAINING_SPLIT:(i+1)*TRAINING_SPLIT],
+                                                       low_res=True), -1)
+            eigvec = retrieve_low_eigvecs(eigvec, training_data[:, i*TRAINING_SPLIT:(i+1)*TRAINING_SPLIT])
             no_non_zero = count_non_zero(eigv)
             eigvec = eigvec[:, :no_non_zero]
             eigenvectors.append(eigvec)

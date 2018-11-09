@@ -13,6 +13,7 @@ def retrieve_low_eigvecs(low_eigvecs, data): # Returns normalized eigenvectors
     vecs /= np.linalg.norm(vecs, axis=0)[None, :]
     return vecs
 
+
 if __name__ == '__main__':
 
     if USE_PREVIOUS:

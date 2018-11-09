@@ -29,7 +29,7 @@ def recognize(reference, to_classify, eigenvectors):
             unknown = coeffs_to_classify[:, i][:, None]
             distance = unknown - reference
             distance = np.linalg.norm(distance, axis=0)
-            who_is_it[i] = np.floor(np.argmin(distance)/7)
+            who_is_it[i] = np.floor(np.argmin(distance)/TRAINING_SPLIT)
 
     else:
 

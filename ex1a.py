@@ -10,7 +10,8 @@ from sklearn.cluster import k_means
 from in_out import display_eigenvectors, display_single_image, save_image, save_values, load_arrays
 
 INPUT_PATH = 'data/face.mat'
-TRAINING_SPLIT = 0.7
+TRAINING_SPLIT_PERCENT = 0.7
+TRAINING_SPLIT = int(TRAINING_SPLIT_PERCENT*10)
 NUMBER_PEOPLE = 52
 
 
@@ -26,10 +27,11 @@ def import_processing(data, class_means=False):
         data = [(x - means[0][..., None]) for i, x in enumerate(X)]
     else:
         x = X[0]
-        means = [np.mean(x[:, i*7:(i+1)*7], axis=1) for i in range(NUMBER_PEOPLE)]
+        means = [np.mean(x[:, i*TRAINING_SPLIT:(i+1)*TRAINING_SPLIT], axis=1) for i in range(NUMBER_PEOPLE)]
         training_data = x
         for i in range(NUMBER_PEOPLE):
-            training_data[:, i*7:(i+1)*7] = x[:, i*7:(i+1)*7] - means[i][:, None]
+            training_data[:, i*TRAINING_SPLIT:(i+1)*TRAINING_SPLIT] = x[:, i*TRAINING_SPLIT:(i+1)*TRAINING_SPLIT]\
+                                                                      - means[i][:, None]
         data = [training_data, X[1]]
 
     return data, means
@@ -37,8 +39,8 @@ def import_processing(data, class_means=False):
 
 def split_data(X):
 
-    training_data = np.reshape(X[..., 0:int(TRAINING_SPLIT*10)], (46*56, -1))
-    test_data = np.reshape(X[..., int(TRAINING_SPLIT*10):], (46*56, -1))
+    training_data = np.reshape(X[..., 0:int(TRAINING_SPLIT)], (46 * 56, -1))
+    test_data = np.reshape(X[..., int(TRAINING_SPLIT):], (46 * 56, -1))
     data = [training_data, test_data]
     return data
 
@@ -122,7 +124,7 @@ def recognize(reference, to_classify, eigenvectors):
             unknown = coeffs_to_classify[:, i][:, None]
             distance = unknown - reference
             distance = np.linalg.norm(distance, axis=0)
-            who_is_it[i] = np.floor(np.argmin(distance)/7)
+            who_is_it[i] = np.floor(np.argmin(distance)/TRAINING_SPLIT)
 
     else:
 
@@ -160,8 +162,8 @@ if __name__ == '__main__':
         who_is_it = recognize(ref_coeffs, X[1], eig[1][:, :i])
         print(who_is_it)
         #who_is_it = recognize(ref_coeffs, X[1], eig[1][:, :i])
-        true_individual_index = np.arange(0,NUMBER_PEOPLE)
-        true_individual_index = np.repeat(true_individual_index[:, None], 3, axis=1).reshape(-1)
+        true_individual_index = np.arange(0, NUMBER_PEOPLE)
+        true_individual_index = np.repeat(true_individual_index[:, None], 10-TRAINING_SPLIT, axis=1).reshape(-1)
         accuracy = accuracy_measurement(true_individual_index, who_is_it)
         # error_var = np.var(errors)
         error_mean = np.mean(accuracy)
