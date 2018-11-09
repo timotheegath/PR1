@@ -90,7 +90,7 @@ def classify_Rec(query_images, eigenvectors, means):
 
 if __name__ == '__main__':
     NN = False
-
+    t1 = time.time()
     if NN:
         [training_data, testing_data], means = import_processing(INPUT_PATH)
         eigenvalues, eigenvectors = find_eigenvectors(compute_S(training_data, low_res=True), -1)
@@ -123,6 +123,10 @@ if __name__ == '__main__':
         true_faces = create_ground_truth()
         bool_recognised, accuracy = bool_and_accuracy(true_faces, classifications)
         print(accuracy)
-        
+    t2 = time.time()
+    duration = t2-t1
+
+    print(duration)
+    
     # print(recognised_faces)
     # print(bool_recognised)
