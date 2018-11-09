@@ -27,7 +27,6 @@ def import_processing(data, class_means=False):
     else:
         x = X[0]
         means = [np.mean(x[:, i*7:(i+1)*7], axis=1) for i in range(NUMBER_PEOPLE)]
-        print(means[0].shape)
         training_data = x
         for i in range(NUMBER_PEOPLE):
 
