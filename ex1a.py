@@ -10,7 +10,7 @@ from sklearn.cluster import k_means
 from in_out import display_eigenvectors, display_single_image, save_image, save_values, load_arrays
 
 INPUT_PATH = 'data/face.mat'
-TRAINING_SPLIT_PERCENT = 0.7
+TRAINING_SPLIT_PERCENT = 0.6
 TRAINING_SPLIT = int(TRAINING_SPLIT_PERCENT*10)
 NUMBER_PEOPLE = 52
 
