@@ -7,8 +7,9 @@ from sklearn.preprocessing import normalize
 from sklearn.cluster import k_means
 
 from in_out import display_eigenvectors, display_single_image, save_image, save_values, load_arrays
-from ex1a import find_eigenvectors, find_projection, import_processing, INPUT_PATH, compute_S, recognize, NUMBER_PEOPLE, TRAINING_SPLIT
+from ex1a import find_eigenvectors, find_projection, import_processing, INPUT_PATH, compute_S, recognize, NUMBER_PEOPLE, TRAINING_SPLIT, count_non_zero
 from ex1b import retrieve_low_eigvecs
+from ex1aa import reconstruct
 from in_out import display_eigenvectors
 import time
 import cv2
@@ -68,28 +69,60 @@ def classify(projections_training, projections_test):
         distances.append(np.linalg.norm(projections_training - projections_test[:, i][:, None], axis=0))
     return np.floor(np.argmin(np.array(distances), axis=1)/7).astype(np.uint16)
 
+def classify_Rec(query_images, eigenvectors, means):
+
+    errors = np.zeros((query_images.shape[1], NUMBER_PEOPLE))
+    for i, vec in enumerate(eigenvectors):
+
+        projection = np.matmul(query_images.transpose(), vec)
+        reconstruction = reconstruct(vec, projection.transpose(), means[i])
+        error = np.linalg.norm((reconstruction-query_images + means[i][:, None]), axis=0)  # Mean per class or not ?
+        errors[:, i] = error
+
+    classification = np.argmin(errors, axis=1)
+    return classification
+
+
+
+
+
+
 
 if __name__ == '__main__':
+    NN = False
 
-    [training_data, testing_data], means = import_processing(INPUT_PATH)
-
-    eigenvalues, eigenvectors = find_eigenvectors(compute_S(training_data, low_res=True), -1)
-    eigenvectors = retrieve_low_eigvecs(eigenvectors, training_data)
-    projections_training, projections_test = find_projection(eigenvectors, training_data),\
-                                             find_projection(eigenvectors, testing_data)
-    recognised_faces = classify(projections_training, projections_test)
-
-    true_faces = create_ground_truth()
-
-    bool_recognised, accuracy = bool_and_accuracy(true_faces, recognised_faces)
-    conf_matrix = confusion_matrix(true_faces, recognised_faces, res=20)*255
-
-    # print(accuracy)
-
-
-    cv2.imshow('Confusion matrix', conf_matrix)
-    cv2.waitKey()
-    print(np.unique(conf_matrix))
-
+    if NN:
+        [training_data, testing_data], means = import_processing(INPUT_PATH)
+        eigenvalues, eigenvectors = find_eigenvectors(compute_S(training_data, low_res=True), -1)
+        eigenvectors = retrieve_low_eigvecs(eigenvectors, training_data)
+        projections_training, projections_test = find_projection(eigenvectors, training_data),\
+                                                 find_projection(eigenvectors, testing_data)
+        recognised_faces = classify(projections_training, projections_test)
+    
+        true_faces = create_ground_truth()
+    
+        bool_recognised, accuracy = bool_and_accuracy(true_faces, recognised_faces)
+        conf_matrix = confusion_matrix(true_faces, recognised_faces, res=20)*255
+    
+        # print(accuracy)
+    
+    
+        cv2.imshow('Confusion matrix', conf_matrix)
+        cv2.waitKey()
+        print(np.unique(conf_matrix))
+    else:
+        [training_data, testing_data], means = import_processing(INPUT_PATH, class_means=True)
+        eigenvectors = []
+        for i in range(NUMBER_PEOPLE):
+            eigv, eigvec = find_eigenvectors(compute_S(training_data[:, i*7:(i+1)*7], low_res=True), -1)
+            eigvec = retrieve_low_eigvecs(eigvec, training_data[:, i*7:(i+1)*7])
+            no_non_zero = count_non_zero(eigv)
+            eigvec = eigvec[:, :no_non_zero]
+            eigenvectors.append(eigvec)
+        classifications = classify_Rec(testing_data, eigenvectors, means)
+        true_faces = create_ground_truth()
+        bool_recognised, accuracy = bool_and_accuracy(true_faces, classifications)
+        print(accuracy)
+        
     # print(recognised_faces)
     # print(bool_recognised)

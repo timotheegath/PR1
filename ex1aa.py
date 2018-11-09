@@ -48,28 +48,28 @@ def measure_reconstruction_error(reconstructed, original):
     distortion = np.mean(difference)
     return distortion
 
+if __name__ == '__main__':
+    [training_data, test_data], means = import_processing(INPUT_PATH)
+    eigenvalues, eigenvectors = find_eigenvectors(compute_S(training_data, low_res=True), -1)
+    eigenvectors = retrieve_low_eigvecs(eigenvectors, training_data)
+    projections = find_projection(eigenvectors, training_data)
+    distortions = []
+    for i in range(1, eigenvalues.shape[0], 1):
+        try :
+            temp_projections = projections[:i]
+            temp_eigenvecs = eigenvectors[:, :i]
+            reconstructions = reconstruct(temp_eigenvecs, temp_projections, means[0])
+            distortion = measure_reconstruction_error(reconstructions, training_data + means[0][..., None])
+            distortions.append(distortion)
+            display_eigenvectors(reconstructions[:, :30])
 
-[training_data, test_data], means = import_processing(INPUT_PATH)
-eigenvalues, eigenvectors = find_eigenvectors(compute_S(training_data, low_res=True), -1)
-eigenvectors = retrieve_low_eigvecs(eigenvectors, training_data)
-projections = find_projection(eigenvectors, training_data)
-distortions = []
-for i in range(1, eigenvalues.shape[0], 1):
-    try :
-        temp_projections = projections[:i]
-        temp_eigenvecs = eigenvectors[:, :i]
-        reconstructions = reconstruct(temp_eigenvecs, temp_projections, means[0])
-        distortion = measure_reconstruction_error(reconstructions, training_data + means[0][..., None])
-        distortions.append(distortion)
-        display_eigenvectors(reconstructions[:, :30])
-
-        plt.plot(distortions)
-        plt.title('Distortion against number of eigenvectors')
-        plt.show(block=False)
-        plt.pause(0.01)
-    except KeyboardInterrupt:
-        continue
+            plt.plot(distortions)
+            plt.title('Distortion against number of eigenvectors')
+            plt.show(block=False)
+            plt.pause(0.01)
+        except KeyboardInterrupt:
+            continue
 
 
-time.sleep(20)
+    time.sleep(20)
 

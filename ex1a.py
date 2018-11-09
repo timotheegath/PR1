@@ -15,14 +15,17 @@ NUMBER_PEOPLE = 52
 
 
 
-def import_processing(data):
+def import_processing(data, class_means=False):
 
     faces = loadmat(data)
     # faces dimension is 2576, 520 -> each image is column vector of pixels(46, 56)
     X = np.reshape(faces['X'], (46*56, 52, 10))  # separate arrays for each person
     X = split_data(X)
-
-    means = [np.mean(x, axis=1) for x in X]
+    if not class_means:
+        means = [np.mean(x, axis=1) for x in X]
+    else:
+        x = X[0]
+        means = [np.mean(x[:, i*7:(i+1)*7], axis=1) for i in range(NUMBER_PEOPLE)]
     data = [(x - means[i][..., None]) for i, x in enumerate(X)]
     return data, means
 
