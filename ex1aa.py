@@ -48,7 +48,9 @@ def measure_reconstruction_error(reconstructed, original):
     distortion = np.mean(difference)
     return distortion
 
+
 if __name__ == '__main__':
+
     [training_data, test_data], means = import_processing(INPUT_PATH)
     eigenvalues, eigenvectors = find_eigenvectors(compute_S(training_data, low_res=True), -1)
     eigenvectors = retrieve_low_eigvecs(eigenvectors, training_data)
