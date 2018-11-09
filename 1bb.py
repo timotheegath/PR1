@@ -40,7 +40,6 @@ def confusion_matrix(ground_truth, prediction, res=80):
         matrix[i, ground_truth[i], prediction[i]] = 1
     matrix = np.sum(matrix, axis=0)
     matrix /= 3
-    print(np.max(small_index), np.max(big_index))
     big_matrix.flatten()[big_index] = matrix.flatten()[small_index]
 
     # matrix = cv2.resize(matrix, dsize=(res,res), interpolation=cv2.INTER_LINEAR)
@@ -89,7 +88,7 @@ def classify_Rec(query_images, eigenvectors, means):
 
 
 if __name__ == '__main__':
-    NN = False
+    NN = True
     t1 = time.time()
 
     if NN:
@@ -105,12 +104,12 @@ if __name__ == '__main__':
         bool_recognised, accuracy = bool_and_accuracy(true_faces, recognised_faces)
         conf_matrix = confusion_matrix(true_faces, recognised_faces, res=20)*255
     
-        # print(accuracy)
+        print(accuracy)
     
     
-        cv2.imshow('Confusion matrix', conf_matrix)
-        cv2.waitKey()
-        print(np.unique(conf_matrix))
+        #cv2.imshow('Confusion matrix', conf_matrix)
+        # cv2.waitKey()
+        # print(np.unique(conf_matrix))
     else:
         [training_data, testing_data], means = import_processing(INPUT_PATH, class_means=True)
         eigenvectors = []
