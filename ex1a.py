@@ -36,9 +36,11 @@ def import_processing(data, class_means=False):
 
 
 def split_data(X):
-
-    training_data = np.reshape(X[..., 0:int(TRAINING_SPLIT*10)], (46*56, -1))
-    test_data = np.reshape(X[..., int(TRAINING_SPLIT*10):], (46*56, -1))
+    random_indexes = np.arange(0, 10)
+    np.random.shuffle(random_indexes)
+    print(random_indexes[0:7])
+    training_data = np.reshape(X[..., random_indexes[0:7]], (46*56, -1))
+    test_data = np.reshape(X[..., random_indexes[7:]], (46*56, -1))
     data = [training_data, test_data]
     return data
 
