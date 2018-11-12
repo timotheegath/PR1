@@ -63,14 +63,14 @@ def save_image(image_dic): # Feed a dictionary with all images in it
         cv2.imwrite(path, image)
 
 
-def save_values(values_dic):  # Feed a dictionary with all arrays in it
+def save_values(values_dic, name=0):  # Feed a dictionary with all arrays in it
     caller = os.path.basename(main.__file__)[:-3]  # identify who called the function to get the exercise number, remove
     # the .py extension
     if not os.path.exists(os.path.join('results', caller)):
         print('Created folder')
         os.mkdir('results/' + caller)  # Make folders if they don't exist
-
-    name = "_".join(values_dic.keys())
+    if name is 0:
+        name = "_".join(values_dic.keys())
 
     path = os.path.join('results', caller, name)  # Path where image will be saved
     savemat(path, values_dic)
