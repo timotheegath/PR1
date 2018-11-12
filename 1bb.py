@@ -1,10 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy.io
-from scipy.io import loadmat
-from scipy import spatial
-from sklearn.preprocessing import normalize
-from sklearn.cluster import k_means
+import itertools
+from sklearn.metrics import confusion_matrix
 
 from in_out import display_eigenvectors, display_single_image, save_image, save_values, load_arrays
 from ex1a import find_eigenvectors, find_projection, import_processing, INPUT_PATH, compute_S, recognize, NUMBER_PEOPLE, TRAINING_SPLIT, count_non_zero
@@ -31,22 +28,44 @@ def identify_success(bool_a, number=-1):
 
     return indices[:number]
 
-def confusion_matrix(ground_truth, prediction, res=80):
+# From https://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html
 
-    res = NUMBER_PEOPLE * res
-    matrix = np.zeros((ground_truth.shape[0], NUMBER_PEOPLE, NUMBER_PEOPLE), dtype=np.float32)
-    big_matrix = np.zeros((res, res), dtype=np.float32)
-    small_index = np.floor(np.linspace(0, NUMBER_PEOPLE**2, res**2, endpoint=False)).astype(np.uint16)
-    big_index = np.arange(0, res**2)
-    for i in range(ground_truth.shape[0]):
-        matrix[i, ground_truth[i], prediction[i]] = 1
-    matrix = np.sum(matrix, axis=0)
-    matrix /= 3
-    big_matrix.flatten()[big_index] = matrix.flatten()[small_index]
+def plot_confusion_matrix(cm, classes,
+                          normalize=False,
+                          title='Confusion matrix',
+                          cmap=plt.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    """
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
 
-    # matrix = cv2.resize(matrix, dsize=(res,res), interpolation=cv2.INTER_LINEAR)
+    print(cm)
 
-    return 1 - big_matrix.reshape((res, res))
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], fmt),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+    plt.tight_layout()
+    plt.show()
+
+
 
 def bool_and_accuracy(ground_truth, prediction):
 
@@ -105,7 +124,8 @@ if __name__ == '__main__':
     
         bool_recognised, accuracy = bool_and_accuracy(true_faces, recognised_faces)
 
-        conf_matrix = confusion_matrix(true_faces, recognised_faces, res=20)*255
+        conf_matrix = confusion_matrix(true_faces, recognised_faces)
+        plot_confusion_matrix(conf_matrix, classes=np.arange(0, NUMBER_PEOPLE), normalize=True)
         failures = identify_failure(bool_recognised)
 
         display_eigenvectors(testing_data[:, failures]+means[0][:, None])
