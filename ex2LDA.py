@@ -6,6 +6,7 @@ from sklearn.preprocessing import normalize
 from sklearn.cluster import k_means
 
 from ex1a import count_non_zero
+from in_out import display_eigenvectors
 
 
 INPUT_PATH = 'data/face.mat'
@@ -75,11 +76,14 @@ def reduce_by_PCA(training_data):
     low_S = compute_S(training_data, low_res=True)
     eig_val, eig_vec = find_eigenvectors(low_S, how_many=-1)
     eig_vec = retrieve_low_eigvecs(eig_vec, training_data)
+    print(eig_vec.shape)
     Mpca = training_data.shape[1]-NUMBER_PEOPLE     # hyperparameter Mpca <= N-c
     eig_vec_reduced = eig_vec[:, :Mpca]
+    print(eig_vec_reduced.shape)
     projection_coeffs = find_projection(eig_vec_reduced, training_data)
+    print(projection_coeffs.shape)
     # return eig_vec_reduced
-    return projection_coeffs
+    return projection_coeffs, eig_vec_reduced
 
 
 def compute_class_means(training_data):
@@ -101,8 +105,8 @@ def compute_class_scatters(training_data, class_means):
 
 def compute_Sb(class_means):
 
-    global_mean = np.mean(class_means, axis=1)
-    global_mean = np.repeat(global_mean[:, None], NUMBER_PEOPLE, axis=1)
+    global_mean = np.mean(class_means, axis=1, keepdims=True)
+    global_mean = np.repeat(global_mean, NUMBER_PEOPLE, axis=1)
     Sb = np.matmul(class_means - global_mean, (class_means - global_mean).transpose())
     # print(Sb.shape)
     return Sb
@@ -123,11 +127,18 @@ def compute_LDA_Fisherfaces(Sw, Sb):
     fisherfaces_reduced = fisherfaces[:, :Mlda]
     return fisherfaces_reduced
 
+
+def goto_original_domain(fisherfaces, Wpca):
+
+    fisher_images = np.matmul(Wpca, fisherfaces)
+    return fisher_images
+
+
 if __name__ == '__main__':
 
     [training_data, testing_data], means = import_processing(INPUT_PATH)    # Training and Testing data have the
     # training mean removed
-    reduced_training_data = reduce_by_PCA(training_data)
+    reduced_training_data, Wpca = reduce_by_PCA(training_data)
     # Wpca = reduce_by_PCA(training_data)
     # print(Wpca.shape)
     class_means = compute_class_means(reduced_training_data)
@@ -139,3 +150,5 @@ if __name__ == '__main__':
     # projection)
     fisherfaces = compute_LDA_Fisherfaces(Sw, Sb)
     print(fisherfaces.shape)
+    display_eigenvectors(goto_original_domain(fisherfaces, Wpca))
+
