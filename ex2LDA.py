@@ -6,14 +6,21 @@ from sklearn.preprocessing import normalize
 from sklearn.cluster import k_means
 
 from ex1a import count_non_zero
-from in_out import display_eigenvectors
+from in_out import display_eigenvectors, save_values
 
 
 INPUT_PATH = 'data/face.mat'
-TRAINING_SPLIT_PERCENT = 0.6
+TRAINING_SPLIT_PERCENT = 0.5
 TRAINING_SPLIT = int(TRAINING_SPLIT_PERCENT*10)
 NUMBER_PEOPLE = 52
+M_PCA_reduction = 0  # Negative value
+M_LDA_reduction = 0   # Negative value
 
+# Leave those alone, access only
+M_PCA = 0
+M_LDA = 0
+SB_RANK = 0
+SW_RANK = 0
 
 def import_processing(data, class_means=False):
 
@@ -72,13 +79,14 @@ def find_projection(eigenvectors, faces):  # eigenvectors and faces in vector fo
 
 
 def reduce_by_PCA(training_data):
+    global M_PCA
 
     low_S = compute_S(training_data, low_res=True)
     eig_val, eig_vec = find_eigenvectors(low_S, how_many=-1)
     eig_vec = retrieve_low_eigvecs(eig_vec, training_data)
     # print(eig_vec.shape)
-    Mpca = training_data.shape[1]-NUMBER_PEOPLE     # hyperparameter Mpca <= N-c
-    eig_vec_reduced = eig_vec[:, :Mpca]
+    M_PCA = training_data.shape[1]-NUMBER_PEOPLE + M_PCA_reduction   # hyperparameter Mpca <= N-c
+    eig_vec_reduced = eig_vec[:, :M_PCA]
     # print(eig_vec_reduced.shape)
     projection_coeffs = find_projection(eig_vec_reduced, training_data)
     # print(projection_coeffs.shape)
@@ -101,7 +109,7 @@ def compute_class_scatters(training_data, class_means):
     # print(training_data.shape, class_means.shape)
     class_scatters = np.matmul(training_data - class_means, (training_data - class_means).transpose(0, 2, 1))
     # Might have to for loop but I think it works
-    # print(class_scatters.shape)
+    print(class_scatters.shape)
     return class_scatters
 
 def compute_Sb(class_means):
@@ -120,12 +128,12 @@ def compute_Sw(class_scatters):
 
 
 def compute_LDA_Fisherfaces(Sw, Sb, reduced_faces):
-
+    global M_LDA
     S = np.matmul(np.linalg.inv(Sw), Sb)
     eig_vals, fisherfaces = find_eigenvectors(S, how_many=-1)
-    Mlda = count_non_zero(eig_vals)     # hyperparameter Mlda <= c-1 -> there should be 51 non_zero eiganvalues
+    M_LDA = count_non_zero(eig_vals) + M_LDA_reduction     # hyperparameter Mlda <= c-1 -> there should be 51 non_zero eiganvalues
     # print(Mlda)     # Mlda = c - 1 = 51
-    fisherfaces_reduced = fisherfaces[:, :Mlda]
+    fisherfaces_reduced = fisherfaces[:, :M_LDA]
     fisher_ref_coeffs = find_projection(fisherfaces_reduced, reduced_faces)
     return fisher_ref_coeffs, fisherfaces_reduced
 
@@ -147,9 +155,9 @@ def find_fisher_coeffs(candidate_images, Wpca, fisherfaces):
 def classify(LDA_coeffs_training, LDA_coeffs_test):
 
     distances = []
-    print(LDA_coeffs_training.shape, LDA_coeffs_test.shape)
     for i in range(LDA_coeffs_test.shape[1]):
         distances.append(np.linalg.norm(LDA_coeffs_training - LDA_coeffs_test[:, i][:, None], axis=0))
+
     return np.floor(np.argmin(np.array(distances), axis=1)/TRAINING_SPLIT).astype(np.uint16)
 
 
@@ -177,18 +185,23 @@ if __name__ == '__main__':
     class_means = compute_class_means(reduced_training_data)
     class_scatters = compute_class_scatters(reduced_training_data, class_means)
     Sb = compute_Sb(class_means)
-    # print(Sb.shape, np.linalg.matrix_rank(Sb))        # Rank is c - 1 -> 51
+    SB_RANK =  np.linalg.matrix_rank(Sb)      # Rank is c - 1 -> 51
     Sw = compute_Sw(class_scatters)
-    # print(Sw.shape, np.linalg.matrix_rank(Sw))        # Rank is N - c -> 312(train_imgs) - 52 = 260 (same as PCA reduction
+    SW_RANK = np.linalg.matrix_rank(Sw)        # Rank is N - c -> 312(train_imgs) - 52 = 260 (same as PCA reduction
     # projection)
     reference_LDA_coeffs, fisherfaces = compute_LDA_Fisherfaces(Sw, Sb, reduced_training_data)
     display_eigenvectors(goto_original_domain(fisherfaces, Wpca))
     ''' Start classification procedure'''
     candidate_LDA_coeffs = find_fisher_coeffs(testing_data, Wpca, fisherfaces)
     classification = classify(reference_LDA_coeffs, candidate_LDA_coeffs)
-    # print(classification)
-    ground_truth = create_ground_truth()
-    bool_array, accuracy = bool_and_accuracy(ground_truth, classification)
-    # print(accuracy)
 
+    ground_truth = create_ground_truth()
+
+    bool_array, accuracy = bool_and_accuracy(ground_truth, classification)
+
+    print(accuracy)
+    save_dict = {'accuracy': accuracy, 'training_split': TRAINING_SPLIT, 'M_PCA': M_PCA, 'M_LDA': M_LDA,
+                 'Sb_rank': SB_RANK, 'Sw_rank': SW_RANK}
+    save_name = 'split_{}m_pca{}m_lda{}'.format(TRAINING_SPLIT, M_PCA, M_LDA)
+    save_values(save_dict, name=save_name)
 
