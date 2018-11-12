@@ -76,12 +76,12 @@ def reduce_by_PCA(training_data):
     low_S = compute_S(training_data, low_res=True)
     eig_val, eig_vec = find_eigenvectors(low_S, how_many=-1)
     eig_vec = retrieve_low_eigvecs(eig_vec, training_data)
-    print(eig_vec.shape)
+    # print(eig_vec.shape)
     Mpca = training_data.shape[1]-NUMBER_PEOPLE     # hyperparameter Mpca <= N-c
     eig_vec_reduced = eig_vec[:, :Mpca]
-    print(eig_vec_reduced.shape)
+    # print(eig_vec_reduced.shape)
     projection_coeffs = find_projection(eig_vec_reduced, training_data)
-    print(projection_coeffs.shape)
+    # print(projection_coeffs.shape)
     # return eig_vec_reduced
     return projection_coeffs, eig_vec_reduced
 
@@ -118,20 +118,53 @@ def compute_Sw(class_scatters):
     return Sw
 
 
-def compute_LDA_Fisherfaces(Sw, Sb):
+def compute_LDA_Fisherfaces(Sw, Sb, reduced_faces):
 
     S = np.matmul(np.linalg.inv(Sw), Sb)
     eig_vals, fisherfaces = find_eigenvectors(S, how_many=-1)
     Mlda = count_non_zero(eig_vals)     # hyperparameter Mlda <= c-1 -> there should be 51 non_zero eiganvalues
     # print(Mlda)     # Mlda = c - 1 = 51
     fisherfaces_reduced = fisherfaces[:, :Mlda]
-    return fisherfaces_reduced
+    fisher_ref_coeffs = find_projection(fisherfaces_reduced, reduced_faces)
+    return fisherfaces_reduced, fisher_ref_coeffs
 
 
 def goto_original_domain(fisherfaces, Wpca):
 
     fisher_images = np.matmul(Wpca, fisherfaces)
     return fisher_images
+
+
+def find_fisher_coeffs(candidate_images, Wpca, fisherfaces):
+
+    PCA_images = find_projection(Wpca, candidate_images)
+    LDA_coeffs = find_projection(fisherfaces, PCA_images) # 51 vector
+
+    return LDA_coeffs
+
+
+def classify(LDA_coeffs_training, LDA_coeffs_test):
+
+    distances = []
+    print(LDA_coeffs_test.shape)
+    print(LDA_coeffs_training.shape)
+    for i in range(LDA_coeffs_test.shape[1]):
+        distances.append(np.linalg.norm(LDA_coeffs_training - LDA_coeffs_test[:, i][:, None], axis=0))
+    return np.floor(np.argmin(np.array(distances), axis=1)/TRAINING_SPLIT).astype(np.uint16)
+
+
+def create_ground_truth():
+
+    true_individual_index = np.arange(0, NUMBER_PEOPLE)
+    true_individual_index = np.repeat(true_individual_index[:, None], 10-TRAINING_SPLIT, axis=1).reshape(-1)
+    return true_individual_index
+
+
+def bool_and_accuracy(ground_truth, prediction):
+
+    correct = ground_truth == prediction
+    accuracy = (correct[correct].shape[0]) / (ground_truth.shape[0])
+    return correct, accuracy
 
 
 if __name__ == '__main__':
@@ -144,11 +177,19 @@ if __name__ == '__main__':
     class_means = compute_class_means(reduced_training_data)
     class_scatters = compute_class_scatters(reduced_training_data, class_means)
     Sb = compute_Sb(class_means)
-    print(Sb.shape, np.linalg.matrix_rank(Sb))        # Rank is c - 1 -> 51
+    # print(Sb.shape, np.linalg.matrix_rank(Sb))        # Rank is c - 1 -> 51
     Sw = compute_Sw(class_scatters)
-    print(Sw.shape, np.linalg.matrix_rank(Sw))        # Rank is N - c -> 312(train_imgs) - 52 = 260 (same as PCA reduction
+    # print(Sw.shape, np.linalg.matrix_rank(Sw))        # Rank is N - c -> 312(train_imgs) - 52 = 260 (same as PCA reduction
     # projection)
-    fisherfaces = compute_LDA_Fisherfaces(Sw, Sb)
-    print(fisherfaces.shape)
-    display_eigenvectors(goto_original_domain(fisherfaces, Wpca))
+    fisherfaces, reference_LDA_coeffs = compute_LDA_Fisherfaces(Sw, Sb, reduced_training_data)
+    # print(fisherfaces.shape)
+    # display_eigenvectors(goto_original_domain(fisherfaces, Wpca))
+    ''' Start classification procedure'''
+    candidate_LDA_coeffs = find_fisher_coeffs(testing_data, Wpca, fisherfaces)
+    classification = classify(reference_LDA_coeffs, candidate_LDA_coeffs)
+    print(classification)
+    ground_truth = create_ground_truth()
+    bool_array, accuracy = bool_and_accuracy(ground_truth, classification)
+    print(accuracy)
+
 
