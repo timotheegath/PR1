@@ -89,6 +89,7 @@ def reduce_by_PCA(training_data):
 def compute_class_means(training_data):
 
     class_means = np.mean(training_data.reshape(-1, TRAINING_SPLIT, NUMBER_PEOPLE), axis=1) # Shape is 2576*52 -> D*c
+    print()
     return class_means
 
 
@@ -126,7 +127,7 @@ def compute_LDA_Fisherfaces(Sw, Sb, reduced_faces):
     # print(Mlda)     # Mlda = c - 1 = 51
     fisherfaces_reduced = fisherfaces[:, :Mlda]
     fisher_ref_coeffs = find_projection(fisherfaces_reduced, reduced_faces)
-    return fisherfaces_reduced, fisher_ref_coeffs
+    return fisher_ref_coeffs, fisherfaces_reduced
 
 
 def goto_original_domain(fisherfaces, Wpca):
@@ -146,8 +147,7 @@ def find_fisher_coeffs(candidate_images, Wpca, fisherfaces):
 def classify(LDA_coeffs_training, LDA_coeffs_test):
 
     distances = []
-    print(LDA_coeffs_test.shape)
-    print(LDA_coeffs_training.shape)
+    print(LDA_coeffs_training.shape, LDA_coeffs_test.shape)
     for i in range(LDA_coeffs_test.shape[1]):
         distances.append(np.linalg.norm(LDA_coeffs_training - LDA_coeffs_test[:, i][:, None], axis=0))
     return np.floor(np.argmin(np.array(distances), axis=1)/TRAINING_SPLIT).astype(np.uint16)
@@ -181,15 +181,14 @@ if __name__ == '__main__':
     Sw = compute_Sw(class_scatters)
     # print(Sw.shape, np.linalg.matrix_rank(Sw))        # Rank is N - c -> 312(train_imgs) - 52 = 260 (same as PCA reduction
     # projection)
-    fisherfaces, reference_LDA_coeffs = compute_LDA_Fisherfaces(Sw, Sb, reduced_training_data)
-    # print(fisherfaces.shape)
-    # display_eigenvectors(goto_original_domain(fisherfaces, Wpca))
+    reference_LDA_coeffs, fisherfaces = compute_LDA_Fisherfaces(Sw, Sb, reduced_training_data)
+    display_eigenvectors(goto_original_domain(fisherfaces, Wpca))
     ''' Start classification procedure'''
     candidate_LDA_coeffs = find_fisher_coeffs(testing_data, Wpca, fisherfaces)
     classification = classify(reference_LDA_coeffs, candidate_LDA_coeffs)
-    print(classification)
+    # print(classification)
     ground_truth = create_ground_truth()
     bool_array, accuracy = bool_and_accuracy(ground_truth, classification)
-    print(accuracy)
+    # print(accuracy)
 
 
