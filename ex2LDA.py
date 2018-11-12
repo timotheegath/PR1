@@ -10,7 +10,7 @@ from in_out import display_eigenvectors, save_values
 
 
 INPUT_PATH = 'data/face.mat'
-TRAINING_SPLIT_PERCENT = 0.5
+TRAINING_SPLIT_PERCENT = 0.7
 TRAINING_SPLIT = int(TRAINING_SPLIT_PERCENT*10)
 NUMBER_PEOPLE = 52
 M_PCA_reduction = 0  # Negative value
@@ -29,8 +29,8 @@ def import_processing(data, class_means=False):
     X = np.reshape(faces['X'], (46*56, 52, 10))  # separate arrays for each person
     X = split_data(X)
     means = [np.mean(X[0], axis=1)]
-    data = [(x - means[0][..., None]) for i, x in enumerate(X)]
-    return data, means
+    # data = [(x - means[0][..., None]) for i, x in enumerate(X)]
+    return X, means
 
 
 def split_data(x):
@@ -78,26 +78,22 @@ def find_projection(eigenvectors, faces):  # eigenvectors and faces in vector fo
     return coeffs
 
 
-def reduce_by_PCA(training_data):
+def reduce_by_PCA(training_data, means):
     global M_PCA
 
+    training_data = training_data - means[0][:, None]
     low_S = compute_S(training_data, low_res=True)
     eig_val, eig_vec = find_eigenvectors(low_S, how_many=-1)
     eig_vec = retrieve_low_eigvecs(eig_vec, training_data)
     # print(eig_vec.shape)
     M_PCA = training_data.shape[1]-NUMBER_PEOPLE + M_PCA_reduction   # hyperparameter Mpca <= N-c
     eig_vec_reduced = eig_vec[:, :M_PCA]
-    # print(eig_vec_reduced.shape)
-    projection_coeffs = find_projection(eig_vec_reduced, training_data)
-    # print(projection_coeffs.shape)
-    # return eig_vec_reduced
-    return projection_coeffs, eig_vec_reduced
+    return eig_vec_reduced
 
 
 def compute_class_means(training_data):
 
     class_means = np.mean(training_data.reshape(-1, TRAINING_SPLIT, NUMBER_PEOPLE), axis=1) # Shape is 2576*52 -> D*c
-    print()
     return class_means
 
 
@@ -109,7 +105,6 @@ def compute_class_scatters(training_data, class_means):
     # print(training_data.shape, class_means.shape)
     class_scatters = np.matmul(training_data - class_means, (training_data - class_means).transpose(0, 2, 1))
     # Might have to for loop but I think it works
-    print(class_scatters.shape)
     return class_scatters
 
 def compute_Sb(class_means):
@@ -127,14 +122,18 @@ def compute_Sw(class_scatters):
     return Sw
 
 
-def compute_LDA_Fisherfaces(Sw, Sb, reduced_faces):
+def compute_LDA_Fisherfaces(Sw, Sb, Wpca, faces):
     global M_LDA
+
+    Sw = np.matmul(np.matmul(Wpca.transpose(), Sw), Wpca)
+    Sb = np.matmul(np.matmul(Wpca.transpose(), Sb), Wpca)
     S = np.matmul(np.linalg.inv(Sw), Sb)
     eig_vals, fisherfaces = find_eigenvectors(S, how_many=-1)
     M_LDA = count_non_zero(eig_vals) + M_LDA_reduction     # hyperparameter Mlda <= c-1 -> there should be 51 non_zero eiganvalues
     # print(Mlda)     # Mlda = c - 1 = 51
     fisherfaces_reduced = fisherfaces[:, :M_LDA]
-    fisher_ref_coeffs = find_projection(fisherfaces_reduced, reduced_faces)
+    faces = find_projection(Wpca, faces)
+    fisher_ref_coeffs = find_projection(fisherfaces_reduced, faces)
     return fisher_ref_coeffs, fisherfaces_reduced
 
 
@@ -179,18 +178,18 @@ if __name__ == '__main__':
 
     [training_data, testing_data], means = import_processing(INPUT_PATH)    # Training and Testing data have the
     # training mean removed
-    reduced_training_data, Wpca = reduce_by_PCA(training_data)
+    Wpca = reduce_by_PCA(training_data, means)
     # Wpca = reduce_by_PCA(training_data)
     # print(Wpca.shape)
-    class_means = compute_class_means(reduced_training_data)
-    class_scatters = compute_class_scatters(reduced_training_data, class_means)
+    class_means = compute_class_means(training_data)
+    class_scatters = compute_class_scatters(training_data, class_means)
     Sb = compute_Sb(class_means)
     SB_RANK =  np.linalg.matrix_rank(Sb)      # Rank is c - 1 -> 51
     Sw = compute_Sw(class_scatters)
     SW_RANK = np.linalg.matrix_rank(Sw)        # Rank is N - c -> 312(train_imgs) - 52 = 260 (same as PCA reduction
     # projection)
-    reference_LDA_coeffs, fisherfaces = compute_LDA_Fisherfaces(Sw, Sb, reduced_training_data)
-    display_eigenvectors(goto_original_domain(fisherfaces, Wpca))
+    reference_LDA_coeffs, fisherfaces = compute_LDA_Fisherfaces(Sw, Sb, Wpca, training_data)
+    # display_eigenvectors(goto_original_domain(fisherfaces, Wpca))
     ''' Start classification procedure'''
     candidate_LDA_coeffs = find_fisher_coeffs(testing_data, Wpca, fisherfaces)
     classification = classify(reference_LDA_coeffs, candidate_LDA_coeffs)
