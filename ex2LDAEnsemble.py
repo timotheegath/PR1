@@ -8,7 +8,7 @@ from sklearn.cluster import k_means
 from ex1a import count_non_zero
 from in_out import display_eigenvectors, save_values
 
-
+DEFAULT_WLDA = np.zeros((2576, 1))
 INPUT_PATH = 'data/face.mat'
 TRAINING_SPLIT_PERCENT = 0.7
 TRAINING_SPLIT = int(TRAINING_SPLIT_PERCENT*10)
@@ -84,17 +84,19 @@ def compute_class_means(training_bag):
     return class_means
 
 
-def compute_class_scatters(training_data, class_means):
+def compute_Sw(training_bag, class_means):
 
-    class_means = np.repeat(class_means, TRAINING_SPLIT, axis=1)
-    class_means = class_means.reshape(-1, TRAINING_SPLIT, NUMBER_PEOPLE).transpose(2, 0, 1)
-    training_data = training_data.reshape(-1, TRAINING_SPLIT, NUMBER_PEOPLE).transpose(2, 0, 1)
-    print(training_data.shape, class_means.shape)
-    print(training_data.nbytes)
-    meaned_training_data = training_data - class_means
+    class_scatters = np.zeros((training_bag.get_dim(), training_bag.get_dim()),
+                              dtype=np.float32)
+    for c, data in training_bag:
+
+        meaned_training_data = data - class_means[:, c][:, None]
+        # scatter = np.zeros(class_scatters.shape)
+        for ci in range(meaned_training_data.shape[1]):
+            class_scatters += np.outer(meaned_training_data[:, ci], meaned_training_data[:, ci])
+
     # Memory error if it's a 1.3 Gb matrix (52 * 2576 * 2576 in float64 !!!)
-    class_scatters = np.zeros((training_data.shape[0], training_data.shape[1], training_data.shape[1]), dtype=np.float32)
-    np.matmul(meaned_training_data, meaned_training_data.transpose(0, 2, 1), class_scatters)
+    #     class_scatters[c] =  np.matmul(meaned_training_data, meaned_training_data.transpose())
     # Might have to for loop but I think it works
     return class_scatters
 
@@ -106,18 +108,13 @@ def compute_Sb(class_means):
     # print(Sb.shape)
     return Sb
 
-def compute_Sw(class_scatters):
-
-    Sw = np.sum(class_scatters, axis=0)
-    # print(Sw.shape)
-    return Sw
 
 
 class PCA_unit():
 
     def __init__(self):
         self.Wpca = 0
-        self.ref_coeffs = [] * NUMBER_PEOPLE
+        self.ref_coeffs = [[]] * NUMBER_PEOPLE
 
 
 
@@ -135,15 +132,21 @@ class PCA_unit():
         eig_val, eig_vec = find_eigenvectors(low_S, how_many=-1)
         eig_vec = retrieve_low_eigvecs(eig_vec, training_data_meaned)
         # print(eig_vec.shape)
-        M_PCA = training_data.shape[1]-NUMBER_PEOPLE + M_PCA_reduction   # hyperparameter Mpca <= N-c
+        M_PCA = max(training_data.shape[1]-NUMBER_PEOPLE, training_data.shape[1]) + M_PCA_reduction   # hyperparameter Mpca <= N-c
         eig_vec_reduced = eig_vec[:, :M_PCA]
 
         self.Wpca = eig_vec_reduced
-        self.ref_coeffs = [[]] * NUMBER_PEOPLE
+        print(M_PCA)
 
+        leftover_set = set(range(NUMBER_PEOPLE))
         for c, data in training_bag:
-
+            leftover_set -= set([c])
             self.ref_coeffs[c] = self.__call__(data)
+
+            example_dim =  self.ref_coeffs[c].shape
+            # print(example_dim)
+        for c in leftover_set:
+            self.ref_coeffs[c] = np.zeros(example_dim)
 
     def __call__(self, faces):
 
@@ -160,41 +163,38 @@ class LDA_unit():
         self.SB_RANK = 0
         self.Sw = 0
         self.SW_RANK = 0
-        self.ref_coeffs = 0
+        self.ref_coeffs = [[DEFAULT_WLDA]] * NUMBER_PEOPLE
 
 
 
-    def train(self, training_data, PCA_unit):
+    def train(self, training_bag, PCA_unit):
 
-        class_means = compute_class_means(training_data)
-        class_scatters = compute_class_scatters(training_data, class_means)
+        class_means = compute_class_means(training_bag)
+        self.Sw = compute_Sw(training_bag, class_means)
+
         self.Sb = compute_Sb(class_means)
         self.SB_RANK = np.linalg.matrix_rank(self.Sb)  # Rank is c - 1 -> 51
-        self.Sw = compute_Sw(class_scatters)
+
         self.SW_RANK = np.linalg.matrix_rank(
             self.Sw)  # Rank is N - c -> 312(train_imgs) - 52 = 260 (same as PCA reduction
         # projection)
-        Sw = np.matmul(np.matmul(PCA_unit.Wpca.transpose(), self.Sw), PCA_unit.Wpca)
-        Sb = np.matmul(np.matmul(PCA_unit.Wpca.transpose(), self.Sb), PCA_unit.Wpca)
-        S = np.matmul(np.linalg.inv(Sw), Sb)
+        self.Sw = np.matmul(np.matmul(PCA_unit.Wpca.transpose(), self.Sw), PCA_unit.Wpca)
+        self.Sb = np.matmul(np.matmul(PCA_unit.Wpca.transpose(), self.Sb), PCA_unit.Wpca)
+        S = np.matmul(np.linalg.inv(self.Sw), self.Sb)
         eig_vals, fisherfaces = find_eigenvectors(S, how_many=-1)
         M_LDA = count_non_zero(
             eig_vals) + M_LDA_reduction  # hyperparameter Mlda <= c-1 -> there should be 51 non_zero eiganvalues
         # print(Mlda)     # Mlda = c - 1 = 51
-        fisherfaces_reduced = fisherfaces[:, :M_LDA]
-        faces = find_projection(self.Wpca, self.training_data)
-        self.ref_coeffs = self.__call__(fisherfaces_reduced, faces)
+        self.Wlda = fisherfaces[:, :M_LDA]
+
+        for c, reduced_face in enumerate(PCA_unit.ref_coeffs):
+            #ref_coeffs: M_LDA X How many examples per class were available
+            self.ref_coeffs[c] = self.__call__(np.array(reduced_face))
+            # print(self.ref_coeffs[c].shape)
 
     def __call__(self, reduced_faces):
         coeffs = np.matmul(reduced_faces.transpose(), self.Wlda).transpose()
         return coeffs
-
-
-
-
-
-
-
 
 
 class unit():
@@ -211,13 +211,20 @@ class unit():
     def classify_data(self, test_data):
 
         PCA_images = self.PCA_unit(test_data)
+
         LDA_coeffs = self.LDA_unit(PCA_images)  # 51 vector
-
-        distances = []
+        print(LDA_coeffs.shape)
+        distances = np.zeros((NUMBER_PEOPLE, LDA_coeffs.shape[1]))
         for i in range(LDA_coeffs.shape[1]):
-            distances.append(np.linalg.norm(self.ref_coeffs - LDA_coeffs[:, i][:, None], axis=0))
+            distance_temp = []
+            for c, reduced_face in enumerate(self.LDA_unit.ref_coeffs):
 
-        return np.floor(np.argmin(np.array(distances), axis=1) / TRAINING_SPLIT).astype(np.uint16)
+                distances[c, i] = (np.min(np.linalg.norm(reduced_face - LDA_coeffs[:, i][:, None], axis=0)))
+
+
+
+        print(distances.shape)
+        return np.argmin(distances, axis=0)
 
 class Dataset():
     # Dataset with the capability of creating bags of sub datasets
@@ -306,11 +313,10 @@ if __name__ == '__main__':
     # training mean removed
     dataset = Dataset(training_data)
 
-    bag1 = dataset.get_bag(20)
-
-    print(bag1.represented_classes)
+    bag1 = dataset.get_bag(200)
     unit1 = unit(bag1)
-
+    classes = unit1.classify_data(testing_data)
+    print(classes)
 
     ''' Start classification procedure'''
 
