@@ -28,7 +28,7 @@ def display_eigenvectors(vecs, eig=True):
     # 10 images a row
     vecs = np.real(vecs)
     how_many = vecs.shape[1]
-    rows = how_many // 10
+    rows = round(how_many / 10)
     pics = np.zeros((56*rows, 46*10), dtype=np.uint8)
     number = 0
     for i in range(rows):
