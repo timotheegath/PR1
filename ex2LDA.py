@@ -28,7 +28,7 @@ def import_processing(data, class_means=False):
     # faces dimension is 2576, 520 -> each image is column vector of pixels(46, 56)
     X = np.reshape(faces['X'], (46*56, 52, 10))  # separate arrays for each person
     X = split_data(X)
-    means = [np.mean(X[0], axis=1)]
+    means = np.mean(X[0], axis=1, keepdims=True)
     # data = [(x - means[0][..., None]) for i, x in enumerate(X)]
     return X, means
 
@@ -81,11 +81,10 @@ def find_projection(eigenvectors, faces):  # eigenvectors and faces in vector fo
 def reduce_by_PCA(training_data, means):
     global M_PCA
 
-    training_data = training_data - means[0][:, None]
+    training_data = training_data - means
     low_S = compute_S(training_data, low_res=True)
     eig_val, eig_vec = find_eigenvectors(low_S, how_many=-1)
     eig_vec = retrieve_low_eigvecs(eig_vec, training_data)
-    # print(eig_vec.shape)
     M_PCA = training_data.shape[1]-NUMBER_PEOPLE + M_PCA_reduction   # hyperparameter Mpca <= N-c
     eig_vec_reduced = eig_vec[:, :M_PCA]
     return eig_vec_reduced
@@ -176,31 +175,28 @@ def bool_and_accuracy(ground_truth, prediction):
 
 if __name__ == '__main__':
 
-    [training_data, testing_data], means = import_processing(INPUT_PATH)    # Training and Testing data have the
-    # training mean removed
+    [training_data, testing_data], means = import_processing(INPUT_PATH)
     Wpca = reduce_by_PCA(training_data, means)
-    # Wpca = reduce_by_PCA(training_data)
-    # print(Wpca.shape)
     class_means = compute_class_means(training_data)
-    class_scatters = compute_class_scatters(training_data, class_means)
-    Sb = compute_Sb(class_means)
-    SB_RANK =  np.linalg.matrix_rank(Sb)      # Rank is c - 1 -> 51
-    Sw = compute_Sw(class_scatters)
-    SW_RANK = np.linalg.matrix_rank(Sw)        # Rank is N - c -> 312(train_imgs) - 52 = 260 (same as PCA reduction
-    # projection)
-    reference_LDA_coeffs, fisherfaces = compute_LDA_Fisherfaces(Sw, Sb, Wpca, training_data)
-    # display_eigenvectors(goto_original_domain(fisherfaces, Wpca))
-    ''' Start classification procedure'''
-    candidate_LDA_coeffs = find_fisher_coeffs(testing_data, Wpca, fisherfaces)
-    classification = classify(reference_LDA_coeffs, candidate_LDA_coeffs)
-
-    ground_truth = create_ground_truth()
-
-    bool_array, accuracy = bool_and_accuracy(ground_truth, classification)
-
-    print(accuracy)
-    save_dict = {'accuracy': accuracy, 'training_split': TRAINING_SPLIT, 'M_PCA': M_PCA, 'M_LDA': M_LDA,
-                 'Sb_rank': SB_RANK, 'Sw_rank': SW_RANK}
-    save_name = 'split_{}m_pca{}m_lda{}'.format(TRAINING_SPLIT, M_PCA, M_LDA)
-    save_values(save_dict, name=save_name)
+    # class_scatters = compute_class_scatters(training_data, class_means)
+    # Sb = compute_Sb(class_means)
+    # SB_RANK =  np.linalg.matrix_rank(Sb)      # Rank is c - 1 -> 51
+    # Sw = compute_Sw(class_scatters)
+    # SW_RANK = np.linalg.matrix_rank(Sw)        # Rank is N - c -> 312(train_imgs) - 52 = 260 (same as PCA reduction
+    # # projection)
+    # reference_LDA_coeffs, fisherfaces = compute_LDA_Fisherfaces(Sw, Sb, Wpca, training_data)
+    # # display_eigenvectors(goto_original_domain(fisherfaces, Wpca))
+    # ''' Start classification procedure'''
+    # candidate_LDA_coeffs = find_fisher_coeffs(testing_data, Wpca, fisherfaces)
+    # classification = classify(reference_LDA_coeffs, candidate_LDA_coeffs)
+    #
+    # ground_truth = create_ground_truth()
+    #
+    # bool_array, accuracy = bool_and_accuracy(ground_truth, classification)
+    #
+    # print(accuracy)
+    # save_dict = {'accuracy': accuracy, 'training_split': TRAINING_SPLIT, 'M_PCA': M_PCA, 'M_LDA': M_LDA,
+    #              'Sb_rank': SB_RANK, 'Sw_rank': SW_RANK}
+    # save_name = 'split_{}m_pca{}m_lda{}'.format(TRAINING_SPLIT, M_PCA, M_LDA)
+    # save_values(save_dict, name=save_name)
 

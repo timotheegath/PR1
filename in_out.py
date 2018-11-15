@@ -24,7 +24,7 @@ def respan_eigenface(face):
     return face.astype(np.uint8)
 
 
-def display_eigenvectors(vecs):
+def display_eigenvectors(vecs, eig=True):
     # 10 images a row
     vecs = np.real(vecs)
     how_many = vecs.shape[1]
@@ -33,8 +33,10 @@ def display_eigenvectors(vecs):
     number = 0
     for i in range(rows):
         for j in range(10):
-
-            pics[i*56:i*56+56, j*46:j*46+46] = np.reshape(respan_eigenface(vecs[:, number]), (46, 56)).transpose()
+            if eig == True:
+                pics[i*56:i*56+56, j*46:j*46+46] = np.reshape(respan_eigenface(vecs[:, number]), (46, 56)).transpose()
+            elif eig == False:
+                pics[i*56:i*56+56, j*46:j*46+46] = np.reshape(vecs[:, number], (46, 56)).transpose()
             number += 1
             if number == how_many:
                 break

@@ -182,9 +182,9 @@ class LDA_unit():
         self.Sb = np.matmul(np.matmul(PCA_unit.Wpca.transpose(), self.Sb), PCA_unit.Wpca)
         S = np.matmul(np.linalg.inv(self.Sw), self.Sb)
         eig_vals, fisherfaces = find_eigenvectors(S, how_many=-1)
-        M_LDA = count_non_zero(
-            eig_vals) + M_LDA_reduction  # hyperparameter Mlda <= c-1 -> there should be 51 non_zero eiganvalues
-        # print(Mlda)     # Mlda = c - 1 = 51
+        M_LDA = count_non_zero(eig_vals) + M_LDA_reduction  # hyperparameter Mlda <= c-1 -> there should be 51 non_zero
+        # eiganvalues
+        print('soubles', training_bag.doubles, 'SW_RANK', self.SW_RANK, 'SB_RANK', self.SB_RANK, 'classes', len(training_bag.represented_classes), 'MLDA', M_LDA)     # Mlda = c - 1 = 51
         self.Wlda = fisherfaces[:, :M_LDA]
 
         for c, reduced_face in enumerate(PCA_unit.ref_coeffs):
@@ -216,7 +216,7 @@ class unit():
         print(LDA_coeffs.shape)
         distances = np.zeros((NUMBER_PEOPLE, LDA_coeffs.shape[1]))
         for i in range(LDA_coeffs.shape[1]):
-            distance_temp = []
+
             for c, reduced_face in enumerate(self.LDA_unit.ref_coeffs):
 
                 distances[c, i] = (np.min(np.linalg.norm(reduced_face - LDA_coeffs[:, i][:, None], axis=0)))
@@ -235,12 +235,18 @@ class Dataset():
         self.ground_truth = self.create_label()
         self.N = data.shape[1]
 
+
     def get_bag(self, n):
 
         chosen_sample_indexes = np.random.randint(0, self.N, (n,))
+        unique, counts = np.unique(chosen_sample_indexes, return_counts=True)
+        doubles = 0
+        for c in counts:
+            if c > 1:
+                doubles += c-1
         data = self.data[:, chosen_sample_indexes]
         ground_truth = self.ground_truth[chosen_sample_indexes]
-        bag = Bag(data, ground_truth)
+        bag = Bag(data, ground_truth, doubles)
         return bag
 
     @staticmethod
@@ -256,12 +262,14 @@ class Bag():
     # When iterating on it, returns the class number and the corresponding data
     # Can also get the complete data without class labelling by calling get_all()
 
-    def __init__(self, data, ground_truth):
+    def __init__(self, data, ground_truth, doubles):
         self.current = 0
         sort_index = np.argsort(ground_truth)
         self.data, self.ground_truth = data[:, sort_index], ground_truth[sort_index]
         self.data_by_class = []
         self.represented_classes = set([i for i in self.ground_truth])
+        self.doubles = doubles
+
 
         for i in range(NUMBER_PEOPLE):
             addition = []
@@ -313,7 +321,7 @@ if __name__ == '__main__':
     # training mean removed
     dataset = Dataset(training_data)
 
-    bag1 = dataset.get_bag(200)
+    bag1 = dataset.get_bag(training_data.shape[1])
     unit1 = unit(bag1)
     classes = unit1.classify_data(testing_data)
     print(classes)
