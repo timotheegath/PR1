@@ -4,7 +4,7 @@ from scipy.io import loadmat
 from scipy import spatial
 from sklearn.preprocessing import normalize
 from sklearn.cluster import k_means
-
+import matplotlib.pyplot as plt
 from ex1a import count_non_zero
 from in_out import display_eigenvectors, save_values
 
@@ -21,6 +21,7 @@ M_PCA = 0
 M_LDA = 0
 SB_RANK = 0
 SW_RANK = 0
+
 
 def import_processing(data, class_means=False):
 
@@ -43,6 +44,7 @@ def split_data(x):
     data = [training_data, test_data]
     return data
 
+
 def compute_S(data, low_res=False):
 
     N = data.shape[1]
@@ -51,6 +53,7 @@ def compute_S(data, low_res=False):
     S = np.matmul(data, data.transpose()) / N # Normalises by N
 
     return S
+
 
 def find_eigenvectors(S, how_many=-1):
 
@@ -108,6 +111,29 @@ def compute_Sb(class_means):
     # print(Sb.shape)
     return Sb
 
+class Ensemble():
+
+    def __init__(self, n, training_data, bag_size):
+        self.n = n
+        self.units = []
+        for i in range(n):
+            print('Creating unit', i,'...')
+            self.units.append(Unit(training_data.get_bag(bag_size)))
+
+    def classify(self, test_data, MODE='mean'):
+        p_distrib = np.zeros((self.n, NUMBER_PEOPLE, test_data.shape[1]))
+        for i, u in enumerate(self.units):
+
+            p_distrib[i] = u.classify(test_data)
+
+        if MODE is 'mean':
+
+            p_distrib = np.mean(p_distrib, axis=0)
+
+        return p_distrib
+
+
+
 
 
 class PCA_unit():
@@ -136,7 +162,12 @@ class PCA_unit():
         eig_vec_reduced = eig_vec[:, :M_PCA]
 
         self.Wpca = eig_vec_reduced
-        print(M_PCA)
+        # test_im = np.imag(self.Wpca)
+        # unique, counts = np.unique(test_im[test_im!=0], return_counts=True)
+        # print(unique)
+        # print(np.sum(counts))
+        # print(eig_vec_reduced)
+
 
         leftover_set = set(range(NUMBER_PEOPLE))
         for c, data in training_bag:
@@ -170,21 +201,22 @@ class LDA_unit():
     def train(self, training_bag, PCA_unit):
 
         class_means = compute_class_means(training_bag)
-        self.Sw = compute_Sw(training_bag, class_means)
+        self.Sw = compute_Sw(training_bag, class_means).astype(np.float64)
 
-        self.Sb = compute_Sb(class_means)
-        self.SB_RANK = np.linalg.matrix_rank(self.Sb)  # Rank is c - 1 -> 51
+        self.Sb = compute_Sb(class_means).astype(np.float64)
+        # self.SB_RANK = np.linalg.matrix_rank(self.Sb)  # Rank is c - 1 -> 51
 
-        self.SW_RANK = np.linalg.matrix_rank(
-            self.Sw)  # Rank is N - c -> 312(train_imgs) - 52 = 260 (same as PCA reduction
+        # self.SW_RANK = np.linalg.matrix_rank(
+        #     self.Sw)  # Rank is N - c -> 312(train_imgs) - 52 = 260 (same as PCA reduction
         # projection)
         self.Sw = np.matmul(np.matmul(PCA_unit.Wpca.transpose(), self.Sw), PCA_unit.Wpca)
+
         self.Sb = np.matmul(np.matmul(PCA_unit.Wpca.transpose(), self.Sb), PCA_unit.Wpca)
         S = np.matmul(np.linalg.inv(self.Sw), self.Sb)
         eig_vals, fisherfaces = find_eigenvectors(S, how_many=-1)
         M_LDA = count_non_zero(eig_vals) + M_LDA_reduction  # hyperparameter Mlda <= c-1 -> there should be 51 non_zero
         # eiganvalues
-        print('soubles', training_bag.doubles, 'SW_RANK', self.SW_RANK, 'SB_RANK', self.SB_RANK, 'classes', len(training_bag.represented_classes), 'MLDA', M_LDA)     # Mlda = c - 1 = 51
+        # print('soubles', training_bag.doubles, 'SW_RANK', self.SW_RANK, 'SB_RANK', self.SB_RANK, 'classes', len(training_bag.represented_classes), 'MLDA', M_LDA)     # Mlda = c - 1 = 51
         self.Wlda = fisherfaces[:, :M_LDA]
 
         for c, reduced_face in enumerate(PCA_unit.ref_coeffs):
@@ -197,34 +229,35 @@ class LDA_unit():
         return coeffs
 
 
-class unit():
+class Unit():
 
     def __init__(self, training_data):
 
         self.training_data = training_data
-
+        print('PCA unit training...')
         self.PCA_unit = PCA_unit()
         self.PCA_unit.train(self.training_data)
+        print('Done')
+        print('LDA unit training...')
         self.LDA_unit = LDA_unit()
         self.LDA_unit.train(self.training_data, self.PCA_unit)
+        print('Done')
 
-    def classify_data(self, test_data):
+    def classify(self, test_data):
 
         PCA_images = self.PCA_unit(test_data)
 
         LDA_coeffs = self.LDA_unit(PCA_images)  # 51 vector
-        print(LDA_coeffs.shape)
+
         distances = np.zeros((NUMBER_PEOPLE, LDA_coeffs.shape[1]))
         for i in range(LDA_coeffs.shape[1]):
 
             for c, reduced_face in enumerate(self.LDA_unit.ref_coeffs):
 
-                distances[c, i] = (np.min(np.linalg.norm(reduced_face - LDA_coeffs[:, i][:, None], axis=0)))
-
-
-
-        print(distances.shape)
-        return np.argmin(distances, axis=0)
+                distances[c, i] = np.min(np.linalg.norm(reduced_face - LDA_coeffs[:, i][:, None], axis=0))
+                print(distances.shape)
+        distances = distances/np.max(distances, axis=0, keepdims=True)
+        return distances
 
 class Dataset():
     # Dataset with the capability of creating bags of sub datasets
@@ -312,6 +345,10 @@ class Bag():
         return self.data.shape[0]
 
 
+def create_ground_truth():
+    true_individual_index = np.arange(0, NUMBER_PEOPLE)
+    true_individual_index = np.repeat(true_individual_index[:, None], 10 - TRAINING_SPLIT, axis=1).reshape(-1)
+    return true_individual_index
 
 
 
@@ -319,12 +356,20 @@ if __name__ == '__main__':
 
     [training_data, testing_data], means = import_processing(INPUT_PATH)    # Training and Testing data have the
     # training mean removed
-    dataset = Dataset(training_data)
 
-    bag1 = dataset.get_bag(training_data.shape[1])
-    unit1 = unit(bag1)
-    classes = unit1.classify_data(testing_data)
-    print(classes)
+    g_t = create_ground_truth()
+    dataset = Dataset(training_data)
+    ensemble = Ensemble(10, dataset, 300)
+    classification = ensemble.classify(testing_data)
+    for i in range(testing_data.shape[1]):
+
+        plt.bar(np.arange(0, NUMBER_PEOPLE), classification[:, i])
+        plt.title('Class should be ', g_t[i])
+        plt.show()
+        plt.waitforbuttonpress()
+
+
+
 
     ''' Start classification procedure'''
 
