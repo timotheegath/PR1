@@ -2,8 +2,8 @@ out
 results
 *.xml
 *.pyc
-__pycache__/
-.idea/
+__pycache__/**
+.idea/**
 
 *.xml
 .idea/workspace.xml
