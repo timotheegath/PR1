@@ -76,39 +76,6 @@ def find_projection(eigenvectors, faces):  # eigenvectors and faces in vector fo
     return coeffs
 
 
-def compute_class_means(training_bag):
-    class_means = np.zeros((training_bag.get_dim(), NUMBER_PEOPLE))
-
-    for c, data in training_bag:
-        class_means[:, c] = np.mean(data, axis=1) # Shape is 2576*number_of_sample_of_class -> D*c
-
-    return class_means
-
-
-
-
-def compute_Sw(training_bag, class_means):
-
-    class_scatters = np.zeros((training_bag.get_dim(), training_bag.get_dim()),
-                              dtype=np.float32)
-    for c, data in training_bag:
-
-        meaned_training_data = (data - class_means[:, c][:, None]).transpose()[:, None]
-        # scatter = np.zeros(class_scatters.shape)
-        # for ci in range(meaned_training_data.shape[1]):
-        class_scatters += np.sum(np.matmul(meaned_training_data, meaned_training_data.transpose(0, 2, 1)), axis=0)
-
-    return class_scatters
-
-
-def compute_Sb(class_means):
-
-    global_mean = np.mean(class_means, axis=1, keepdims=True)
-    global_mean = np.repeat(global_mean, NUMBER_PEOPLE, axis=1)
-    Sb = np.matmul(class_means - global_mean, (class_means - global_mean).transpose())
-
-    return Sb
-
 class Ensemble():
 
     def __init__(self, n, training_data, bag_size):
@@ -127,6 +94,7 @@ class Ensemble():
         if MODE is 'mean':
 
             p_distrib = np.mean(p_distrib, axis=0)
+            p_distrib /= np.sum(p_distrib, axis=0, keepdims=True)
 
         return p_distrib
 
@@ -145,22 +113,26 @@ class PCA_unit():
             vecs = np.matmul(data, low_eigvecs)
             vecs /= np.linalg.norm(vecs, axis=0)[None, :]
             return vecs
+
+        def reduce_by_PCA(training_data, means):
+            global M_PCA
+
+            training_data_norm = training_data - means
+            low_S = compute_S(training_data_norm, low_res=True)
+            eig_val, eig_vec = find_eigenvectors(low_S, how_many=-1)
+            eig_vec = retrieve_low_eigvecs(eig_vec, training_data_norm)
+            M_PCA = training_data_norm.shape[1] - NUMBER_PEOPLE + M_PCA_reduction  # hyperparameter Mpca <= N-c
+            eig_vec_reduced = eig_vec[:, :M_PCA]
+            return eig_vec_reduced
         global M_PCA
         training_data = training_bag.get_all()
-
-        training_data_meaned = training_data - np.mean(training_data, axis=1, keepdims=True)
-        low_S = compute_S(training_data_meaned, low_res=True)
-        eig_val, eig_vec = find_eigenvectors(low_S, how_many=-1)
-        eig_vec = retrieve_low_eigvecs(eig_vec, training_data_meaned)
-
-        M_PCA = max(training_data.shape[1]-NUMBER_PEOPLE, training_data.shape[1]) + M_PCA_reduction   # hyperparameter Mpca <= N-c
-        eig_vec_reduced = eig_vec[:, :M_PCA]
-
+        eig_vec_reduced = reduce_by_PCA(training_data, training_bag.global_mean)
         self.Wpca = eig_vec_reduced
         # display_eigenvectors(eig_vec_reduced, eig=True)  Wda ok
         leftover_set = set(range(NUMBER_PEOPLE))
         for c, data in training_bag:
             leftover_set -= set([c])
+
             self.ref_coeffs[c] = self.__call__(data)
 
             example_dim =  self.ref_coeffs[c].shape
@@ -189,15 +161,35 @@ class LDA_unit():
 
     def train(self, training_bag, PCA_unit):
 
-        class_means = compute_class_means(training_bag)
-        self.Sw = compute_Sw(training_bag, class_means).astype(np.float64)
+        def compute_Sw(training_bag):
+
+            class_scatters = np.zeros((training_bag.get_dim(), training_bag.get_dim()),
+                                      dtype=np.float64)
+            for c, data in training_bag:
+                meaned_training_data = (data - training_bag.class_means[:, c][:, None]).transpose()[..., None]
+
+                class_scatters += np.sum(np.matmul(meaned_training_data, meaned_training_data.transpose(0, 2, 1)),
+                                         axis=0)
+
+            return class_scatters
+
+        def compute_Sb(class_means):
+
+            global_mean = np.mean(class_means, axis=1, keepdims=True)
+            global_mean = np.repeat(global_mean, NUMBER_PEOPLE, axis=1)
+            Sb = np.matmul(class_means - global_mean, (class_means - global_mean).transpose())
+
+            return Sb
+
+        class_means = training_bag.class_means
+        self.Sw = compute_Sw(training_bag).astype(np.float64)
 
         self.Sb = compute_Sb(class_means).astype(np.float64)
         # self.SB_RANK = np.linalg.matrix_rank(self.Sb)  # Rank is c - 1 -> 51
-
+        #
         # self.SW_RANK = np.linalg.matrix_rank(
         #     self.Sw)  # Rank is N - c -> 312(train_imgs) - 52 = 260 (same as PCA reduction
-        # projection)
+        # # projection)
         t1 = time.time()
         self.Sw = np.matmul(np.matmul(PCA_unit.Wpca.transpose(), self.Sw), PCA_unit.Wpca)
         t2 = time.time()
@@ -206,14 +198,16 @@ class LDA_unit():
         t3 = time.time()
         print('Sw takes {} s and Sb {} s'.format(t2-t1, t3-t2))
         S = np.matmul(np.linalg.inv(self.Sw), self.Sb)
+        print('Rank of S', np.linalg.matrix_rank(S))
         eig_vals, fisherfaces = find_eigenvectors(S, how_many=-1)
         t4 = time.time()
         print('eigenvectors take {} s '.format(t4-t3))
         M_LDA = count_non_zero(eig_vals) + M_LDA_reduction  # hyperparameter Mlda <= c-1 -> there should be 51 non_zero
-
+        print('M_LDA :', M_LDA)
         # print('soubles', training_bag.doubles, 'SW_RANK', self.SW_RANK, 'SB_RANK', self.SB_RANK, 'classes', len(training_bag.represented_classes), 'MLDA', M_LDA)     # Mlda = c - 1 = 51
         self.Wlda = fisherfaces[:, :M_LDA]
-
+        print(self.Wlda.shape)
+        display_eigenvectors(np.matmul(PCA_unit.Wpca, self.Wlda))
         for c, reduced_face in enumerate(PCA_unit.ref_coeffs):
             #ref_coeffs: M_LDA X How many examples per class were available
             self.ref_coeffs[c] = self.__call__(np.array(reduced_face))
@@ -230,6 +224,7 @@ class Unit():
     def __init__(self, training_data):
 
         self.training_data = training_data
+        display_eigenvectors(training_data.data_by_class[0], eig=False)
         all_classes = set(range(NUMBER_PEOPLE))
         not_covered = all_classes - training_data.represented_classes
         print('Classes not covered in this unit: {}'.format(not_covered))
@@ -247,7 +242,7 @@ class Unit():
         PCA_images = self.PCA_unit(test_data)
 
         LDA_coeffs = self.LDA_unit(PCA_images)  # 51 vector
-        print(LDA_coeffs)
+
 
         distances = np.zeros((NUMBER_PEOPLE, LDA_coeffs.shape[1]))
         for i in range(LDA_coeffs.shape[1]):
@@ -280,7 +275,7 @@ class Dataset():
         data = self.data[:, chosen_sample_indexes]
         ground_truth = self.ground_truth[chosen_sample_indexes]
         bag = Bag(data, ground_truth, doubles)
-        print('{:4f}% repeats in this bag'.format(doubles/n*100))
+        print('{:2.1f}% repeats in this bag'.format(doubles/n*100))
         return bag
 
     @staticmethod
@@ -304,15 +299,21 @@ class Bag():
         self.represented_classes = set([i for i in self.ground_truth])
         self.doubles = doubles
 
-
+        self.class_means = np.zeros((data.shape[0], NUMBER_PEOPLE))
         for i in range(NUMBER_PEOPLE):
             addition = []
+            class_exists = False
 
             for x in [index for index, e in enumerate(self.ground_truth) if e == i]:
-
+                class_exists = True
                 addition.append(self.data[:, x])
+            if class_exists:
+                addition = np.array(addition).transpose()
+
+                self.class_means[:, i] = np.mean(addition, axis=1)
 
             self.data_by_class.append(addition)
+        self.global_mean = np.mean(self.class_means, axis=1, keepdims=True)
 
     def __iter__(self):
         self.current = 0
@@ -328,7 +329,7 @@ class Bag():
                 raise StopIteration
         else:
             self.current += 1
-            return self.current-1, np.array(self.data_by_class[self.current-1]).transpose()
+            return self.current-1, np.array(self.data_by_class[self.current-1])
 
     def get_all(self):
 
@@ -361,6 +362,7 @@ if __name__ == '__main__':
     g_t = create_ground_truth()
     dataset = Dataset(training_data)
     ensemble = Ensemble(10, dataset, 300)
+
     classification = ensemble.classify(testing_data)
     for i in range(testing_data.shape[1]):
 
