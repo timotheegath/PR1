@@ -6,7 +6,7 @@ from scipy import spatial
 from sklearn.preprocessing import normalize
 from sklearn.cluster import k_means
 import matplotlib.pyplot as plt
-from ex1a import count_non_zero
+
 from in_out import display_eigenvectors, save_values
 
 DEFAULT_WLDA = np.zeros((2576, 1))
@@ -22,6 +22,15 @@ M_PCA = 0
 M_LDA = 0
 SB_RANK = 0
 SW_RANK = 0
+
+
+def count_non_zero(eigenvalues):
+    temp_eig_vals = np.abs(np.real(eigenvalues))
+    temp_eig_vals /= np.max(temp_eig_vals)
+    # boolean_mask = eigenvalues.nonzero()  # Mask of same shape as vector which is True if value is non zero
+    boolean_mask = temp_eig_vals > 0.00001 # not really non-zero
+    remaining_values = eigenvalues[boolean_mask]  # Only keep non-zero values
+    return remaining_values.shape[0]  # How many left ?
 
 
 def import_processing(data, class_means=False):
@@ -62,7 +71,7 @@ def find_eigenvectors(S, how_many=-1):
         how_many = S.shape[0]
 
     eigvalues, eigvectors = np.linalg.eig(S)
-    indices = np.flip(np.argsort(eigvalues), axis=0) # Gives original indices after sorting
+    indices = np.flip(np.argsort(np.abs(eigvalues)), axis=0) # Gives original indices after sorting
     sorted_eigvalues = eigvalues[indices]
     sorted_eigvectors = eigvectors[:, indices]
 
@@ -128,6 +137,7 @@ class PCA_unit():
         training_data = training_bag.get_all()
         eig_vec_reduced = reduce_by_PCA(training_data, training_bag.global_mean)
         self.Wpca = eig_vec_reduced
+
         # display_eigenvectors(eig_vec_reduced, eig=True)  Wda ok
         leftover_set = set(range(NUMBER_PEOPLE))
         for c, data in training_bag:
@@ -200,14 +210,20 @@ class LDA_unit():
         S = np.matmul(np.linalg.inv(self.Sw), self.Sb)
         print('Rank of S', np.linalg.matrix_rank(S))
         eig_vals, fisherfaces = find_eigenvectors(S, how_many=-1)
+        eig_vals = np.real(eig_vals)
+        # print(eig_vals)
         t4 = time.time()
         print('eigenvectors take {} s '.format(t4-t3))
         M_LDA = count_non_zero(eig_vals) + M_LDA_reduction  # hyperparameter Mlda <= c-1 -> there should be 51 non_zero
+        # plt.figure()
+        #  (np.real(eig_vals[:M_LDA])/np.max(np.abs(np.real(eig_vals)))).astype(np.float32)
+        # plt.plot(np.arange(0, M_LDA, dtype=np.int32), np.real(eig_vals[:M_LDA]), marker='x')
+        # plt.show()
         print('M_LDA :', M_LDA)
         # print('soubles', training_bag.doubles, 'SW_RANK', self.SW_RANK, 'SB_RANK', self.SB_RANK, 'classes', len(training_bag.represented_classes), 'MLDA', M_LDA)     # Mlda = c - 1 = 51
         self.Wlda = fisherfaces[:, :M_LDA]
-        print(self.Wlda.shape)
-        display_eigenvectors(np.matmul(PCA_unit.Wpca, self.Wlda))
+        # print(self.Wlda.shape)
+        # display_eigenvectors(np.matmul(PCA_unit.Wpca, self.Wlda))
         for c, reduced_face in enumerate(PCA_unit.ref_coeffs):
             #ref_coeffs: M_LDA X How many examples per class were available
             self.ref_coeffs[c] = self.__call__(np.array(reduced_face))
@@ -224,7 +240,7 @@ class Unit():
     def __init__(self, training_data):
 
         self.training_data = training_data
-        display_eigenvectors(training_data.data_by_class[0], eig=False)
+
         all_classes = set(range(NUMBER_PEOPLE))
         not_covered = all_classes - training_data.represented_classes
         print('Classes not covered in this unit: {}'.format(not_covered))
