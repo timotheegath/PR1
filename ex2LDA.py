@@ -186,7 +186,8 @@ if __name__ == '__main__':
     reference_LDA_coeffs, fisherfaces = compute_LDA_Fisherfaces(Sw, Sb, Wpca, training_data)
     # CHECKED THIS FAR
 
-    # display_eigenvectors(goto_original_domain(fisherfaces, Wpca))
+    # fish_images = goto_original_domain(fisherfaces, Wpca)
+    # display_eigenvectors(fish_images)
 
     # ''' Start classification procedure'''
     candidate_LDA_coeffs = find_fisher_coeffs(testing_data, Wpca, fisherfaces)
