@@ -428,11 +428,12 @@ if __name__ == '__main__':
         
         ensemble = Ensemble(dataset)
         t_train = T_TRAINING
+        t0 = time.time()
         classification = ensemble.classify(testing_data)
         final_class = np.argmax(classification, axis=0)
         t_class = time.time()
 
-        training_times[nn], testing_times[nn] = t_train, t_class-t_train
+        training_times[nn], testing_times[nn] = t_train, t_class-t0
 
         def bool_and_accuracy(ground_truth, prediction):
             correct = ground_truth == prediction
