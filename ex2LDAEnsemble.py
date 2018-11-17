@@ -419,6 +419,7 @@ if __name__ == '__main__':
             return correct, accuracy
 
         _, acc = bool_and_accuracy(g_t, final_class)
+        accuracies[nn] = acc
         print('Accuracy :', accuracies[nn])
         ensemble.save()
         merged_dict = {varying_parameter: parameter_values, 'accuracy': accuracies, 'training_times': training_times, 'testing_times': testing_times}
