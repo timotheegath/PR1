@@ -11,7 +11,7 @@ from in_out import display_eigenvectors, save_values
 
 DEFAULT_WLDA = np.zeros((2576, 1))
 INPUT_PATH = 'data/face.mat'
-parameters = {'split': 7, 'n_units': 1, 'M_PCA': False, 'M_LDA': False, 'bag_size': 200}
+parameters = {'split': 7, 'n_units': 8, 'M_PCA': False, 'M_LDA': False, 'bag_size': 200}
 
 TRAINING_SPLIT = parameters['split']
 NUMBER_PEOPLE = 52
