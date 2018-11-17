@@ -103,13 +103,13 @@ class Ensemble():
         else :
             for i in range(n):
                 print('Creating unit', i,'...')
-                t_ref = time.time()
+
                 bag = training_data.get_bag(bag_size)
                 t_wasted = time.time()
                 # FOr low bag size, it takes time to find a combination which includes all classes.
                 # Remove this time from training
                 self.units.append(Unit(bag))
-                T_TRAINING += (time.time()- t_ref - t_wasted)
+                T_TRAINING += (time.time() - t_wasted)
 
     def classify(self, test_data):
         p_distrib = np.zeros((self.n, NUMBER_PEOPLE, test_data.shape[1]))
@@ -137,7 +137,7 @@ class Ensemble():
     def get_repeats(self):
         repeats = np.empty((len(self.units)))
         for i, u in enumerate(self.units):
-            repeats[i] = u.training_data.doubles
+            repeats[i] = u.repeats
 
         return repeats
 
@@ -282,6 +282,7 @@ class Unit():
 
             self.LDA_unit.train(self.training_data, self.PCA_unit)
             print('Done')
+        self.repeats = training_data.doubles
         self.training_data = []
     def classify(self, test_data):
 
@@ -428,6 +429,7 @@ if __name__ == '__main__':
         
         ensemble = Ensemble(dataset)
         t_train = T_TRAINING
+
         t0 = time.time()
         classification = ensemble.classify(testing_data)
         final_class = np.argmax(classification, axis=0)
