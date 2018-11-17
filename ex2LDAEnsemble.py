@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.io
 import time
-from scipy.io import loadmat
+from scipy.io import loadmat, savemat
 from scipy import spatial
 from sklearn.preprocessing import normalize
 from sklearn.cluster import k_means
@@ -11,17 +11,11 @@ from in_out import display_eigenvectors, save_values
 
 DEFAULT_WLDA = np.zeros((2576, 1))
 INPUT_PATH = 'data/face.mat'
-TRAINING_SPLIT_PERCENT = 0.7
-TRAINING_SPLIT = int(TRAINING_SPLIT_PERCENT*10)
-NUMBER_PEOPLE = 52
-M_PCA_reduction = 0  # Negative value
-M_LDA_reduction = 0   # Negative value
+parameters = {'split': 7, 'n_units': 1, 'M_PCA': False, 'M_LDA': False, 'bag_size': 200}
 
-# Leave those alone, access only
-M_PCA = 0
-M_LDA = 0
-SB_RANK = 0
-SW_RANK = 0
+TRAINING_SPLIT = parameters['split']
+NUMBER_PEOPLE = 52
+
 
 
 def count_non_zero(eigenvalues):
@@ -87,12 +81,22 @@ def find_projection(eigenvectors, faces):  # eigenvectors and faces in vector fo
 
 class Ensemble():
 
-    def __init__(self, n, training_data, bag_size):
-        self.n = n
+    def __init__(self, training_data, **kwargs):
+        self.n = n = parameters['n_units']
         self.units = []
-        for i in range(n):
-            print('Creating unit', i,'...')
-            self.units.append(Unit(training_data.get_bag(bag_size)))
+        bag_size = parameters['bag_size']
+        if kwargs.get('load', False):
+            path = 'results/ex2LDAEnsemble/'
+            Wpcas = np.load(path + 'Wpca')
+            Wldas = np.load(path + 'Wlda')
+            for i in range(n):
+                print('Creating unit', i,'...')
+                self.units.append(Unit(training_data.get_bag(bag_size, Wpca=Wpcas[i], Wlda=Wldas[i])))
+
+        else :
+            for i in range(n):
+                print('Creating unit', i,'...')
+                self.units.append(Unit(training_data.get_bag(bag_size)))
 
     def classify(self, test_data, MODE='mean'):
         p_distrib = np.zeros((self.n, NUMBER_PEOPLE, test_data.shape[1]))
@@ -105,12 +109,24 @@ class Ensemble():
             p_distrib = np.mean(p_distrib, axis=0)
             p_distrib /= np.sum(p_distrib, axis=0, keepdims=True)
 
-        return p_distrib
+        return 1 - p_distrib
+
+    def save(self):
+        Wpcas = np.zeros((self.n,) + self.units[0].PCA_unit.Wpca.shape, np.complex64)
+        Wldas = np.zeros((self.n,) + self.units[0].LDA_unit.Wlda.shape, np.complex64)
+        for i, u in enumerate(self.units):
+
+            Wpcas[i] = u.PCA_unit.Wpca
+            Wldas[i] = u.LDA_unit.Wlda
+        savemat('results/ex2LDAEnsemble/weights_'+ '_'.join('{}'.format(p) for _, p in parameters.items()),
+                {'Wpca': Wpcas, 'Wlda': Wldas})
+
 
 
 class PCA_unit():
 
     def __init__(self):
+
         self.Wpca = 0
         self.ref_coeffs = [[]] * NUMBER_PEOPLE
 
@@ -124,31 +140,29 @@ class PCA_unit():
             return vecs
 
         def reduce_by_PCA(training_data, means):
-            global M_PCA
 
             training_data_norm = training_data - means
             low_S = compute_S(training_data_norm, low_res=True)
             eig_val, eig_vec = find_eigenvectors(low_S, how_many=-1)
             eig_vec = retrieve_low_eigvecs(eig_vec, training_data_norm)
-            M_PCA = training_data_norm.shape[1] - NUMBER_PEOPLE + M_PCA_reduction  # hyperparameter Mpca <= N-c
+            M_PCA = training_data_norm.shape[1] - NUMBER_PEOPLE
+            M_PCA -= parameters['M_PCA']*np.random.randint(int(-3*M_PCA/4), 0)# hyperparameter Mpca <= N-c
+            print('M_PCA: ', M_PCA)
             eig_vec_reduced = eig_vec[:, :M_PCA]
             return eig_vec_reduced
-        global M_PCA
+
         training_data = training_bag.get_all()
         eig_vec_reduced = reduce_by_PCA(training_data, training_bag.global_mean)
         self.Wpca = eig_vec_reduced
+        self.find_ref_coeffs(training_bag)
 
-        # display_eigenvectors(eig_vec_reduced, eig=True)  Wda ok
-        leftover_set = set(range(NUMBER_PEOPLE))
+    def find_ref_coeffs(self, training_bag):
+
         for c, data in training_bag:
-            leftover_set -= set([c])
+
 
             self.ref_coeffs[c] = self.__call__(data)
 
-            example_dim =  self.ref_coeffs[c].shape
-
-        for c in leftover_set:
-            self.ref_coeffs[c] = np.zeros(example_dim)
 
     def __call__(self, faces):
 
@@ -200,36 +214,26 @@ class LDA_unit():
         # self.SW_RANK = np.linalg.matrix_rank(
         #     self.Sw)  # Rank is N - c -> 312(train_imgs) - 52 = 260 (same as PCA reduction
         # # projection)
-        t1 = time.time()
+
         self.Sw = np.matmul(np.matmul(PCA_unit.Wpca.transpose(), self.Sw), PCA_unit.Wpca)
-        t2 = time.time()
 
         self.Sb = np.matmul(np.matmul(PCA_unit.Wpca.transpose(), self.Sb), PCA_unit.Wpca)
-        t3 = time.time()
-        print('Sw takes {} s and Sb {} s'.format(t2-t1, t3-t2))
         S = np.matmul(np.linalg.inv(self.Sw), self.Sb)
-        print('Rank of S', np.linalg.matrix_rank(S))
         eig_vals, fisherfaces = find_eigenvectors(S, how_many=-1)
         eig_vals = np.real(eig_vals)
-        # print(eig_vals)
-        t4 = time.time()
-        print('eigenvectors take {} s '.format(t4-t3))
-        M_LDA = count_non_zero(eig_vals) + M_LDA_reduction  # hyperparameter Mlda <= c-1 -> there should be 51 non_zero
-        # plt.figure()
-        #  (np.real(eig_vals[:M_LDA])/np.max(np.abs(np.real(eig_vals)))).astype(np.float32)
-        # plt.plot(np.arange(0, M_LDA, dtype=np.int32), np.real(eig_vals[:M_LDA]), marker='x')
-        # plt.show()
+        M_LDA = NUMBER_PEOPLE-1  # hyperparameter Mlda <= c-1 -> there should be 51 non_zero
+        M_LDA -= parameters['M_LDA'] * np.random.randint(int(-3*M_LDA/4), 0)
         print('M_LDA :', M_LDA)
-        # print('soubles', training_bag.doubles, 'SW_RANK', self.SW_RANK, 'SB_RANK', self.SB_RANK, 'classes', len(training_bag.represented_classes), 'MLDA', M_LDA)     # Mlda = c - 1 = 51
+
         self.Wlda = fisherfaces[:, :M_LDA]
-        # print(self.Wlda.shape)
-        # display_eigenvectors(np.matmul(PCA_unit.Wpca, self.Wlda))
+        self.find_ref_coeffs(PCA_unit)
+
+    def find_ref_coeffs(self, PCA_unit):
+
         for c, reduced_face in enumerate(PCA_unit.ref_coeffs):
             #ref_coeffs: M_LDA X How many examples per class were available
             self.ref_coeffs[c] = self.__call__(np.array(reduced_face))
-            # print(self.ref_coeffs[c].shape)
-        t5 = time.time()
-        print('Calling takes {} s '.format(t5-t4))
+
     def __call__(self, reduced_faces):
         coeffs = np.matmul(reduced_faces.transpose(), self.Wlda).transpose()
         return coeffs
@@ -237,21 +241,27 @@ class LDA_unit():
 
 class Unit():
 
-    def __init__(self, training_data):
+    def __init__(self, training_data, **kwargs):
 
         self.training_data = training_data
-
-        all_classes = set(range(NUMBER_PEOPLE))
-        not_covered = all_classes - training_data.represented_classes
-        print('Classes not covered in this unit: {}'.format(not_covered))
-        print('PCA unit training...')
         self.PCA_unit = PCA_unit()
-        self.PCA_unit.train(self.training_data)
-        print('Done')
-        print('LDA unit training...')
         self.LDA_unit = LDA_unit()
-        self.LDA_unit.train(self.training_data, self.PCA_unit)
-        print('Done')
+        if 'Wpca' in kwargs.keys() & 'Wlda' in kwargs.keys():
+            print('Loading previous weights...')
+            self.PCA_unit.Wpca = kwargs['Wpca']
+            self.LDA_unit.Wlda = kwargs['Wlda']
+            self.PCA_unit.find_ref_coeffs(training_data)
+            self.LDA_unit.find_ref_coeffs(self.PCA_unit)
+            print('Done')
+        else:
+            print('PCA unit training...')
+
+            self.PCA_unit.train(self.training_data)
+            print('Done')
+            print('LDA unit training...')
+
+            self.LDA_unit.train(self.training_data, self.PCA_unit)
+            print('Done')
 
     def classify(self, test_data):
 
@@ -270,6 +280,7 @@ class Unit():
         distances = distances/np.max(distances, axis=0, keepdims=True)
         return distances
 
+
 class Dataset():
     # Dataset with the capability of creating bags of sub datasets
 
@@ -281,15 +292,22 @@ class Dataset():
 
 
     def get_bag(self, n):
+        do_again = True
 
-        chosen_sample_indexes = np.random.randint(0, self.N, (n,))
-        unique, counts = np.unique(chosen_sample_indexes, return_counts=True)
-        doubles = 0
-        for c in counts:
-            if c > 1:
-                doubles += c-1
-        data = self.data[:, chosen_sample_indexes]
-        ground_truth = self.ground_truth[chosen_sample_indexes]
+        while(do_again):
+
+            chosen_sample_indexes = np.random.randint(0, self.N, (n,))
+
+            unique, counts = np.unique(chosen_sample_indexes, return_counts=True)
+            doubles = 0
+            for c in counts:
+                if c > 1:
+                    doubles += c-1
+            data = self.data[:, chosen_sample_indexes]
+            ground_truth = self.ground_truth[chosen_sample_indexes]
+            represented_classes = set([i for i in ground_truth])
+            if not set(range(NUMBER_PEOPLE)) - represented_classes:
+                do_again = False
         bag = Bag(data, ground_truth, doubles)
         print('{:2.1f}% repeats in this bag'.format(doubles/n*100))
         return bag
@@ -372,20 +390,33 @@ def create_ground_truth():
 
 if __name__ == '__main__':
 
-    [training_data, testing_data], means = import_processing(INPUT_PATH)    # Training and Testing data have the
-    # training mean removed
+    for nn in range(1, 20):
+        [training_data, testing_data], means = import_processing(INPUT_PATH)  # Training and Testing data have the
+        # training mean removed
+        parameters['n_units'] = nn
+        g_t = create_ground_truth()
 
-    g_t = create_ground_truth()
-    dataset = Dataset(training_data)
-    ensemble = Ensemble(10, dataset, 300)
+        dataset = Dataset(training_data)
+        t0 = time.time()
+        ensemble = Ensemble(dataset)
+        t_train = time.time()
+        classification = ensemble.classify(testing_data)
+        final_class = np.argmax(classification, axis=0)
+        t_class = time.time()
+        times = {'training_t': t_train-t0, 'testing_t': t_class-t_train}
 
-    classification = ensemble.classify(testing_data)
-    for i in range(testing_data.shape[1]):
+        def bool_and_accuracy(ground_truth, prediction):
+            correct = ground_truth == prediction
+            accuracy = (correct[correct].shape[0]) / (ground_truth.shape[0])
 
-        plt.bar(np.arange(0, NUMBER_PEOPLE), classification[:, i])
-        plt.title('Class should be {}'.format(g_t[i]))
-        plt.show()
-        plt.pause(1)
+            return correct, accuracy
+
+        _, acc = bool_and_accuracy(g_t, final_class)
+        merged_dict = {**{'accuracy'
+                       acc}, **times}
+        savemat('results/ex2LDAEnsemble/acc_time_' + '_'.join('{}'.format(p) for _, p in parameters.items()), merged_dict)
+        print('Accuracy :', acc)
+        ensemble.save()
 
 
 
