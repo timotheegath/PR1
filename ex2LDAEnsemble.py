@@ -432,7 +432,7 @@ if __name__ == '__main__':
         final_class = np.argmax(classification, axis=0)
         t_class = time.time()
 
-        training_times[nn], testing_times[nn] = t_train-t0, t_class-t_train
+        training_times[nn], testing_times[nn] = t_train, t_class-t_train
 
         def bool_and_accuracy(ground_truth, prediction):
             correct = ground_truth == prediction
