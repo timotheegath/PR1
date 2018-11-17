@@ -2,6 +2,7 @@ import numpy as np
 from ex1a import find_eigenvectors, compute_S, import_processing, INPUT_PATH
 import matplotlib.pyplot as plt
 from in_out import load_arrays
+import time
 from sklearn.preprocessing import normalize
 from in_out import display_eigenvectors
 
@@ -26,21 +27,23 @@ if __name__ == '__main__':
 
     else :
         [training_data, _], means = import_processing(INPUT_PATH)
+        t0 = time.time()
         matrix_AtA = compute_S(training_data, low_res=True)
-
+        t1 = time.time()
         low_eigvalues, fake_low_eigvecs = find_eigenvectors(matrix_AtA, -1)  # Compute all eigenvectors
         low_eigvecs = retrieve_low_eigvecs(fake_low_eigvecs, training_data)  #low_eigvecs dimension is 2576, 364
-
+        tl = time.time()
         # Recompute
 
         high_eigvals, high_eigvecs = find_eigenvectors(compute_S(training_data), -1)
-
+        th = time.time()
+        print('AtA only : {} s ; Low-res full: {} s; High-res full: {} s'.format(t1-t0, tl-t0, th-tl))
 
 
     difference = np.matmul(high_eigvecs[..., :364 ].transpose(), low_eigvecs)
-    print(difference)
+
     eigenvalue_difference = high_eigvals[:364] - low_eigvalues
-    print(np.min(eigenvalue_difference), np.max(eigenvalue_difference), np.mean(eigenvalue_difference))
+
     plt.figure(1)
     plt.subplot(311)
     plt.scatter(np.arange(0, low_eigvalues.shape[0]), low_eigvalues, c='b', marker='o')

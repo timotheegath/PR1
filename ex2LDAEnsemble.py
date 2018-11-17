@@ -11,7 +11,7 @@ from in_out import display_eigenvectors, save_values
 
 DEFAULT_WLDA = np.zeros((2576, 1))
 INPUT_PATH = 'data/face.mat'
-parameters = {'split': 7, 'n_units': 1, 'M_PCA': False, 'M_LDA': False, 'bag_size': 200}
+parameters = {'split': 7, 'n_units': 8, 'M_PCA': False, 'M_LDA': False, 'bag_size': 200}
 
 TRAINING_SPLIT = parameters['split']
 NUMBER_PEOPLE = 52
@@ -392,10 +392,12 @@ if __name__ == '__main__':
     training_times = np.zeros(12)
     testing_times = np.zeros(12)
     accuracies = np.zeros(12)
-    for nn in range(1, 12):
+    varying_parameter = 'bag_size'
+    parameter_values = np.arange(100, 700, 100)
+    for nn in range(parameter_values.shape[0]):
         [training_data, testing_data], means = import_processing(INPUT_PATH)  # Training and Testing data have the
         # training mean removed
-        parameters['n_units'] = nn
+        parameters[varying_parameter] = parameter_values[nn]
 
         g_t = create_ground_truth()
 
@@ -419,10 +421,8 @@ if __name__ == '__main__':
 
         print('Accuracy :', accuracies[nn])
         ensemble.save()
-    merged_dict = {'accuracy': accuracies, 'training_times': training_times, 'testing_times': testing_times}
-    save_values(merged_dict, 'acc_time_varing_n_units')
-
-
+        merged_dict = {varying_parameter: parameter_values[nn], 'accuracy': accuracies, 'training_times': training_times, 'testing_times': testing_times}
+        save_values(merged_dict, 'acc_time_varing_' + varying_parameter)
 
 
     ''' Start classification procedure'''
