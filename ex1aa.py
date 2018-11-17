@@ -7,9 +7,9 @@ from sklearn.preprocessing import normalize
 from sklearn.cluster import k_means
 
 from in_out import display_eigenvectors, display_single_image, save_image, save_values, load_arrays
-from ex1a import find_eigenvectors, find_projection, import_processing, INPUT_PATH, compute_S
+from ex1a import find_eigenvectors, find_projection, import_processing, INPUT_PATH, compute_S, TRAINING_SPLIT
 from ex1b import retrieve_low_eigvecs
-from in_out import display_eigenvectors
+from in_out import display_eigenvectors, save_values
 import time
 
 def reconstruct(eigenvectors, coeffs, mean):
@@ -56,22 +56,30 @@ if __name__ == '__main__':
     eigenvectors = retrieve_low_eigvecs(eigenvectors, training_data)
     projections = find_projection(eigenvectors, training_data)
     distortions = []
+
+    example_image_index = np.array([54, 23, 78])
+    example_image_checkpoints = [10, 100, 150, 240, 300, 350, 363]
+    example_images = np.zeros((example_image_index.shape[0], 2576, eigenvalues.shape[0]))
     for i in range(1, eigenvalues.shape[0], 1):
         try :
             temp_projections = projections[:i]
             temp_eigenvecs = eigenvectors[:, :i]
             reconstructions = reconstruct(temp_eigenvecs, temp_projections, means[0])
+            if i in example_image_checkpoints:
+                example_images[np.arange(0, example_image_index.shape[0]), :, example_image_checkpoints.index(i)] =\
+                    reconstructions[:, example_image_index].transpose()
             distortion = measure_reconstruction_error(reconstructions, training_data + means[0][..., None])
             distortions.append(distortion)
-            display_eigenvectors(reconstructions[:, :30])
+            # display_eigenvectors(reconstructions[:, :30], eig=False)
 
-            plt.plot(distortions)
-            plt.title('Distortion against number of eigenvectors')
-            plt.show(block=False)
-            plt.pause(0.01)
+            # plt.plot(distortions)
+            # plt.title('Distortion against number of eigenvectors')
+            # plt.show(block=False)
+            # plt.pause(0.01)
         except KeyboardInterrupt:
             continue
 
+    distortions = np.array(distortions)
+    save_values({'distortion': distortions, 'example_image': example_images, 'checkpoints': example_image_checkpoints})
 
-    time.sleep(20)
 

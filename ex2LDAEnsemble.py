@@ -389,11 +389,12 @@ def create_ground_truth():
 
 
 if __name__ == '__main__':
-    training_times = np.zeros(12)
-    testing_times = np.zeros(12)
-    accuracies = np.zeros(12)
+
     varying_parameter = 'bag_size'
     parameter_values = np.arange(100, 700, 100)
+    training_times = np.zeros_like(parameter_values)
+    testing_times = np.zeros_like(parameter_values)
+    accuracies = np.zeros_like(parameter_values)
     for nn in range(parameter_values.shape[0]):
         [training_data, testing_data], means = import_processing(INPUT_PATH)  # Training and Testing data have the
         # training mean removed
