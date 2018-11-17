@@ -121,6 +121,13 @@ class Ensemble():
         savemat('results/ex2LDAEnsemble/weights_'+ '_'.join('{}'.format(p) for _, p in parameters.items()),
                 {'Wpca': Wpcas, 'Wlda': Wldas})
 
+    def get_repeats(self):
+        repeats = np.empty((len(self.units)))
+        for i, u in enumerate(self.units):
+            repeats[i] = u.training_data.doubles
+
+        return repeats
+
 
 
 class PCA_unit():
@@ -308,7 +315,8 @@ class Dataset():
             represented_classes = set([i for i in ground_truth])
             if not set(range(NUMBER_PEOPLE)) - represented_classes:
                 do_again = False
-        bag = Bag(data, ground_truth, doubles)
+        bag = Bag(data, ground_truth, doubles/n)
+
         print('{:2.1f}% repeats in this bag'.format(doubles/n*100))
         return bag
 
@@ -395,6 +403,7 @@ if __name__ == '__main__':
     training_times = np.zeros_like(parameter_values)
     testing_times = np.zeros_like(parameter_values)
     accuracies = np.zeros_like(parameter_values).astype(np.float32)
+    repeats = np.zeros((parameter_values.shape[0], parameters['n_units']))
     for nn in range(parameter_values.shape[0]):
         [training_data, testing_data], means = import_processing(INPUT_PATH)  # Training and Testing data have the
         # training mean removed
@@ -420,9 +429,11 @@ if __name__ == '__main__':
 
         _, acc = bool_and_accuracy(g_t, final_class)
         accuracies[nn] = acc
+        repeats[nn] = ensemble.get_repeats()
         print('Accuracy :', accuracies[nn])
         ensemble.save()
-        merged_dict = {varying_parameter: parameter_values, 'accuracy': accuracies, 'training_times': training_times, 'testing_times': testing_times}
+        merged_dict = {varying_parameter: parameter_values, 'accuracy': accuracies, 'training_times': training_times,
+                       'testing_times': testing_times, 'repeats_in_bag':  repeats}
         save_values(merged_dict, 'acc_time_varying_' + varying_parameter)
 
 
