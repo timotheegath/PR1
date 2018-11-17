@@ -11,7 +11,10 @@ from in_out import display_eigenvectors, save_values
 
 DEFAULT_WLDA = np.zeros((2576, 1))
 INPUT_PATH = 'data/face.mat'
-parameters = {'split': 7, 'n_units': 8, 'M_PCA': False, 'M_LDA': False, 'bag_size': 200}
+parameters = {'split': 7, 'n_units': 8, 'M_PCA': False, 'M_LDA': False, 'bag_size': 200, 'combination': 'mean'}
+# A true value for MLDA and MPCA randomizes their values to be between 1/4 and 4/4 of their original value
+# The combination defines how the units' outputs are combined. For now, only mean is implemented but product needs to
+# be implemented
 
 TRAINING_SPLIT = parameters['split']
 NUMBER_PEOPLE = 52
@@ -98,13 +101,13 @@ class Ensemble():
                 print('Creating unit', i,'...')
                 self.units.append(Unit(training_data.get_bag(bag_size)))
 
-    def classify(self, test_data, MODE='mean'):
+    def classify(self, test_data):
         p_distrib = np.zeros((self.n, NUMBER_PEOPLE, test_data.shape[1]))
         for i, u in enumerate(self.units):
 
             p_distrib[i] = u.classify(test_data)
 
-        if MODE is 'mean':
+        if parameters['combinations'] is 'mean':
 
             p_distrib = np.mean(p_distrib, axis=0)
             p_distrib /= np.sum(p_distrib, axis=0, keepdims=True)
@@ -269,7 +272,7 @@ class Unit():
 
             self.LDA_unit.train(self.training_data, self.PCA_unit)
             print('Done')
-
+        self.training_data = []
     def classify(self, test_data):
 
         PCA_images = self.PCA_unit(test_data)
