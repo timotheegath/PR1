@@ -1,7 +1,7 @@
 close all
 clear all
 load('distortion_example_image_checkpoints.mat')
-how_many_faces = size(example_image, 1)
+how_many_faces = size(example_image, 1);
 figure()
 intervals = checkpoints;
 for j = 1:how_many_faces
