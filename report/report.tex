@@ -53,12 +53,31 @@ The low-dimensional computation proved to be 72 times faster than the standard c
 
 \subsection{Application of eigenfaces}
 \subsubsection{Part a)}
+The training data was used to find the eigenfaces. The testing data was projected in the eigenspace, and it was attempted to reconstruct it by using a lower or equal amount of eigenfaces.
 
+Quantitatively, the distortion (reconstruction error) is ever decreasing as the number of eigenvectors used for reconstruction increases, as shown in Figure \ref{fig:distortion}. However, the improvement gets slower as the number of eigenvectors increases, hinting that the full number of eigenvectors is not necessary to achieve a 'good-enough' reconstruction.
+
+This shows qualitatively in Figure \ref{fig:reconstr_faces}: the faces get reliably recognisable with around $M =150$ eigenvectors  
 \begin{figure}
     \centering
-    \includegraphics[width=0.5\textwidth]{../results/ex1aa/distortion.png}
-    \caption{Comparison of the high-dimensional and low-dimensional computations of eigenvalues and eigenvectors. Negative dot product values indicate exactly opposed vectors.}
-    \label{fig:eig_diff1}
+    \begin{subfigure}
+        \includegraphics[width=0.5\textwidth]{../results/ex1aa/dist_plot.png}
+        \caption{Distortion of the reconstructed images when varying the number of eigenvectors used}
+        \label{fig:distortion}
+        \quad
+    \end{subfigure}
+    \begin{subfigure}
+        \includegraphics[width=0.5\textwidth]{../results/ex1aa/dist_logplot.png}
+        \caption{Distortion of the reconstructed images when varying the number of eigenvectors used}
+        \label{fig:distortion}
+        \quad
+    \end{subfigure}
+\end{figure}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\textwidth]{../results/ex1aa/face_plots.png}
+    \caption{Reconstructed faces, M indicates the number of eigenvectors used}
+    \label{fig:reconstr_faces}
 \end{figure}
 
 
