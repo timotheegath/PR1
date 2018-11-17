@@ -117,7 +117,7 @@ class Ensemble():
 
             p_distrib[i] = u.classify(test_data)
 
-        if parameters['combinations'] is 'mean':
+        if parameters['combination'] is 'mean':
 
             p_distrib = np.mean(p_distrib, axis=0)
             p_distrib /= np.sum(p_distrib, axis=0, keepdims=True)
