@@ -19,6 +19,8 @@ parameters = {'split': 7, 'n_units': 8, 'M_PCA': False, 'M_LDA': False, 'bag_siz
 TRAINING_SPLIT = parameters['split']
 NUMBER_PEOPLE = 52
 
+T_TRAINING = 0
+
 
 
 def count_non_zero(eigenvalues):
@@ -85,6 +87,8 @@ def find_projection(eigenvectors, faces):  # eigenvectors and faces in vector fo
 class Ensemble():
 
     def __init__(self, training_data, **kwargs):
+        global T_TRAINING
+        T_TRAINING = 0
         self.n = n = parameters['n_units']
         self.units = []
         bag_size = parameters['bag_size']
@@ -99,7 +103,13 @@ class Ensemble():
         else :
             for i in range(n):
                 print('Creating unit', i,'...')
-                self.units.append(Unit(training_data.get_bag(bag_size)))
+                t_ref = time.time()
+                bag = training_data.get_bag(bag_size)
+                t_wasted = time.time()
+                # FOr low bag size, it takes time to find a combination which includes all classes.
+                # Remove this time from training
+                self.units.append(Unit(bag))
+                T_TRAINING += (time.time()- t_ref - t_wasted)
 
     def classify(self, test_data):
         p_distrib = np.zeros((self.n, NUMBER_PEOPLE, test_data.shape[1]))
@@ -402,7 +412,7 @@ def create_ground_truth():
 if __name__ == '__main__':
 
     varying_parameter = 'bag_size'
-    parameter_values = np.arange(100, 700, 100)
+    parameter_values = np.arange(100, 500, 75)
     training_times = np.zeros_like(parameter_values)
     testing_times = np.zeros_like(parameter_values)
     accuracies = np.zeros_like(parameter_values).astype(np.float32)
@@ -415,9 +425,9 @@ if __name__ == '__main__':
         g_t = create_ground_truth()
 
         dataset = Dataset(training_data)
-        t0 = time.time()
+        
         ensemble = Ensemble(dataset)
-        t_train = time.time()
+        t_train = T_TRAINING
         classification = ensemble.classify(testing_data)
         final_class = np.argmax(classification, axis=0)
         t_class = time.time()
@@ -439,8 +449,6 @@ if __name__ == '__main__':
                        'testing_times': testing_times, 'repeats_in_bag':  repeats}
         save_values(merged_dict, 'acc_time_varying_' + varying_parameter)
 
-
-    ''' Start classification procedure'''
 
 
 
