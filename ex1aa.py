@@ -70,7 +70,7 @@ if __name__ == '__main__':
                     reconstructions[:, example_image_index].transpose()
             distortion = measure_reconstruction_error(reconstructions, training_data + means[0][..., None])
             distortions.append(distortion)
-            
+
         except KeyboardInterrupt:
             continue
 
