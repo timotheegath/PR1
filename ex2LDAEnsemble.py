@@ -414,8 +414,8 @@ if __name__ == '__main__':
 
     varying_parameter = 'bag_size'
     parameter_values = np.arange(100, 500, 75)
-    training_times = np.zeros_like(parameter_values)
-    testing_times = np.zeros_like(parameter_values)
+    training_times = np.zeros_like(parameter_values).astype(np.float32)
+    testing_times = np.zeros_like(parameter_values).astype(np.float32)
     accuracies = np.zeros_like(parameter_values).astype(np.float32)
     repeats = np.zeros((parameter_values.shape[0], parameters['n_units']))
     for nn in range(parameter_values.shape[0]):
