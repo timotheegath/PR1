@@ -389,11 +389,14 @@ def create_ground_truth():
 
 
 if __name__ == '__main__':
-
-    for nn in range(1, 20):
+    training_times = np.zeros(12)
+    testing_times = np.zeros(12)
+    accuracies = np.zeros(12)
+    for nn in range(1, 12):
         [training_data, testing_data], means = import_processing(INPUT_PATH)  # Training and Testing data have the
         # training mean removed
         parameters['n_units'] = nn
+
         g_t = create_ground_truth()
 
         dataset = Dataset(training_data)
@@ -403,7 +406,8 @@ if __name__ == '__main__':
         classification = ensemble.classify(testing_data)
         final_class = np.argmax(classification, axis=0)
         t_class = time.time()
-        times = {'training_t': t_train-t0, 'testing_t': t_class-t_train}
+
+        training_times[nn], testing_times[nn] = t_train-t0, t_class-t_train
 
         def bool_and_accuracy(ground_truth, prediction):
             correct = ground_truth == prediction
@@ -411,12 +415,12 @@ if __name__ == '__main__':
 
             return correct, accuracy
 
-        _, acc = bool_and_accuracy(g_t, final_class)
-        merged_dict = {**{'accuracy'
-                       acc}, **times}
-        savemat('results/ex2LDAEnsemble/acc_time_' + '_'.join('{}'.format(p) for _, p in parameters.items()), merged_dict)
-        print('Accuracy :', acc)
+        _, accuracies[nn] = bool_and_accuracy(g_t, final_class)
+
+        print('Accuracy :', accuracies[nn])
         ensemble.save()
+    merged_dict = {'accuracy': accuracies, 'training_times': training_times, 'testing_times': testing_times}
+    save_values(merged_dict, 'acc_time_varing_n_units')
 
 
 

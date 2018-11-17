@@ -10,7 +10,7 @@ from sklearn.cluster import k_means
 from in_out import display_eigenvectors, display_single_image, save_image, save_values, load_arrays
 
 INPUT_PATH = 'data/face.mat'
-TRAINING_SPLIT_PERCENT = 0.6
+TRAINING_SPLIT_PERCENT = 0.7
 TRAINING_SPLIT = int(TRAINING_SPLIT_PERCENT*10)
 NUMBER_PEOPLE = 52
 
@@ -163,13 +163,14 @@ if __name__ == '__main__':
         # errors = measure_reconstruct_error(X[1] + means[1][:, None], reconstructed_image)
         ref_coeffs = np.real(find_reference_coeffs(eig[1][:, :i], X[0]))
         who_is_it = recognize(ref_coeffs, X[1], eig[1][:, :i])
-        print(who_is_it)
+
         #who_is_it = recognize(ref_coeffs, X[1], eig[1][:, :i])
         true_individual_index = np.arange(0, NUMBER_PEOPLE)
         true_individual_index = np.repeat(true_individual_index[:, None], 10-TRAINING_SPLIT, axis=1).reshape(-1)
         accuracy = accuracy_measurement(true_individual_index, who_is_it)
         # error_var = np.var(errors)
         error_mean = np.mean(accuracy)
+
         # error_vars.append(error_var)
         error_means.append(error_mean)
         # update plot
