@@ -2,7 +2,7 @@
 
 
 \usepackage{graphicx}
-\title{Courework 1: Face recognition }
+\title{Coursework 1: Face recognition }
 \author{TGATH LLAG}
 \begin{document}
 
@@ -14,9 +14,10 @@ The abstract
 \section{Question 1}
 \subsection{Eigenfaces}
 \subsubsection{Part a)}
-The faces dataset consisted of 10 pictures of each of the 52 different individuals. Hence, it was decided to split the data into 7 pictures per individual for training and 3 pictures per individual for testing, resulting in a total of 364 training images. Moreover, the order of pictures per individual was randomised before to remove any possible correlation between the complexity/characteristics of the pictures and their order.
+The faces dataset consisted of 10 pictures of each of the 52 different individuals. Hence, it was decided to split the data into 7 pictures per individual for training and 3 pictures per individual for testing, resulting in a total of 364 training images. This allowed to train the PCA on all available classes and run meaningful tests on all images. Moreover, the order of pictures per individual was randomised before to remove any possible correlation between the complexity/characteristics of the pictures and their order. 
 
 Standard PCA was performed and the eigenfaces in Figure \ref{fig:eigfaces1} were found, along with the eigenvalues in Figure \ref{fig:eigvals1}. The data was normalised by subtracting the mean face shown in Figure \ref{fig:mean_im1}. In order to identify relevant principal components, the eigenvalues of the covariance matrix with a real part lower than 0.1 were discarded (the number was chosen by inspection). 363 eigenfaces and eigenvalues remained after this thresholding operation, meaning that 363 eigenfaces were relevant to optimally reduce the dimensionality of the data. Notably, for $N$ training samples, the number of relevant eigenvalues was found to be $N - 1$. 
+% How do you choose how many eigenvectors you'll actually keep ?
 
 \begin{figure}
     \centering
@@ -28,7 +29,7 @@ Standard PCA was performed and the eigenfaces in Figure \ref{fig:eigfaces1} were
 \begin{figure}
     \centering
     \includegraphics[width=0.4\textwidth]{../results/ex1a/eigenvalues.png}
-    \caption{Real part of all PCA eigenvalues (semi-log-y axis)}
+    \caption{Real part of all PCA eigenvalues (semi-log-y axis). Negative eigenvalues were discarded but were close to 0.}
     \label{fig:eigvals1}
 \end{figure}
 
@@ -40,14 +41,25 @@ Standard PCA was performed and the eigenfaces in Figure \ref{fig:eigfaces1} were
 \end{figure}
 
 \subsubsection{Part b)}
+The low-dimensional computation returns as expected $N - 1$ eigenvalues and eigenvectors which we then compare to the original ones from Part b) in Figure \ref{fig:eig_diff1}. We can notice that there is no difference in the eigenvalue's values as well as the eigenvector's directions (by normalising them and taking their dot product). 
+The low-dimensional computation proved to be 72 times faster than the standard computation, even though it involved more steps, since the dimensionality of the matrix from which the eigenvectors were computed was lower. 
+% What's a con of this method ?
 \begin{figure}
     \centering
     \includegraphics[width=0.5\textwidth]{../results/ex1b/DIfference_eig.png}
-    \caption{Comparison of the high-dimensional and low-dimensional computations of eigenvalues and eigenvectors}
+    \caption{Comparison of the high-dimensional and low-dimensional computations of eigenvalues and eigenvectors. Negative dot product values indicate exactly opposed vectors.}
     \label{fig:eig_diff1}
 \end{figure}
 
+\subsection{Application of eigenfaces}
+\subsubsection{Part a)}
 
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\textwidth]{../results/ex1aa/distortion.png}
+    \caption{Comparison of the high-dimensional and low-dimensional computations of eigenvalues and eigenvectors. Negative dot product values indicate exactly opposed vectors.}
+    \label{fig:eig_diff1}
+\end{figure}
 
 
 %\bibliography{IEEEabrv,./refs}
