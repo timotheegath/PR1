@@ -11,7 +11,7 @@ from in_out import display_eigenvectors, save_values
 
 DEFAULT_WLDA = np.zeros((2576, 1))
 INPUT_PATH = 'data/face.mat'
-parameters = {'split': 7, 'n_units': 8, 'M_PCA': False, 'M_LDA': False, 'bag_size': 200, 'combination': 'mean'}
+parameters = {'split': 7, 'n_units': 8, 'M_PCA': False, 'M_LDA': False, 'bag_size': 200, 'combination': 'product'}
 # A true value for MLDA and MPCA randomizes their values to be between 1/4 and 4/4 of their original value
 # The combination defines how the units' outputs are combined. For now, only mean is implemented but product needs to
 # be implemented
@@ -120,7 +120,12 @@ class Ensemble():
         if parameters['combination'] is 'mean':
 
             p_distrib = np.mean(p_distrib, axis=0)
-            p_distrib /= np.sum(p_distrib, axis=0, keepdims=True)
+
+        elif parameters['combination'] is 'product':
+
+            p_distrib = np.prod(p_distrib, axis=0)
+
+        p_distrib /= np.sum(p_distrib, axis=0, keepdims=True)
 
         return 1 - p_distrib
 

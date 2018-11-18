@@ -4,6 +4,7 @@ results/ex1a/*.mat
 *.pyc
 __pycache__/**
 .idea/**
+results/ex2LDAEnsemble/weights*.mat
 
 *.xml
 .idea/workspace.xml
