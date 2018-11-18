@@ -11,7 +11,7 @@ from in_out import display_eigenvectors, save_values
 
 DEFAULT_WLDA = np.zeros((2576, 1))
 INPUT_PATH = 'data/face.mat'
-parameters = {'split': 7, 'n_units': 8, 'M_PCA': False, 'M_LDA': False, 'bag_size': 200, 'combination': 'product'}
+parameters = {'split': 7, 'n_units': 8, 'M_PCA': False, 'M_LDA': True, 'bag_size': 200, 'combination': 'product'}
 # A true value for MLDA and MPCA randomizes their values to be between 1/4 and 4/4 of their original value
 # The combination defines how the units' outputs are combined. For now, only mean is implemented but product needs to
 # be implemented
@@ -146,6 +146,13 @@ class Ensemble():
 
         return repeats
 
+    def get_M_LDA(self):
+        M_LDA = np.empty((len(self.units)))
+        for i, u in enumerate(self.units):
+            M_LDA[i] = u.LDA_unit.M_LDA
+
+        return M_LDA
+
 
 
 class PCA_unit():
@@ -205,6 +212,7 @@ class LDA_unit():
         self.Sw = 0
         self.SW_RANK = 0
         self.ref_coeffs = [[DEFAULT_WLDA]] * NUMBER_PEOPLE
+        self.M_LDA = 0
 
 
 
@@ -246,11 +254,11 @@ class LDA_unit():
         S = np.matmul(np.linalg.inv(self.Sw), self.Sb)
         eig_vals, fisherfaces = find_eigenvectors(S, how_many=-1)
         eig_vals = np.real(eig_vals)
-        M_LDA = NUMBER_PEOPLE-1  # hyperparameter Mlda <= c-1 -> there should be 51 non_zero
-        M_LDA -= parameters['M_LDA'] * np.random.randint(int(-3*M_LDA/4), 0)
-        print('M_LDA :', M_LDA)
+        self.M_LDA = NUMBER_PEOPLE-1  # hyperparameter Mlda <= c-1 -> there should be 51 non_zero
+        self.M_LDA -= parameters['M_LDA'] * np.random.randint(int(-3*self.M_LDA/4), 0)
+        print('M_LDA :', self.M_LDA)
 
-        self.Wlda = fisherfaces[:, :M_LDA]
+        self.Wlda = fisherfaces[:, :self.M_LDA]
         self.find_ref_coeffs(PCA_unit)
 
     def find_ref_coeffs(self, PCA_unit):
@@ -423,6 +431,8 @@ if __name__ == '__main__':
     testing_times = np.zeros_like(parameter_values).astype(np.float32)
     accuracies = np.zeros_like(parameter_values).astype(np.float32)
     repeats = np.zeros((parameter_values.shape[0], parameters['n_units']))
+    M_LDAs = np.zeros((parameter_values.shape[0], parameters['n_units']))
+
     for nn in range(parameter_values.shape[0]):
         [training_data, testing_data], means = import_processing(INPUT_PATH)  # Training and Testing data have the
         # training mean removed
@@ -451,11 +461,12 @@ if __name__ == '__main__':
         _, acc = bool_and_accuracy(g_t, final_class)
         accuracies[nn] = acc
         repeats[nn] = ensemble.get_repeats()
+        M_LDAs[nn] = ensemble.get_M_LDA()
         print('Accuracy :', accuracies[nn])
-        ensemble.save()
+        # ensemble.save()
         merged_dict = {varying_parameter: parameter_values, 'accuracy': accuracies, 'training_times': training_times,
-                       'testing_times': testing_times, 'repeats_in_bag':  repeats}
-        save_values(merged_dict, 'acc_time_varying_' + varying_parameter)
+                       'testing_times': testing_times, 'repeats_in_bag':  repeats, 'M_LDA': M_LDAs}
+        save_values(merged_dict, 'acc_time_varying_' + varying_parameter + 'M_LDA_is_true')
 
 
 
