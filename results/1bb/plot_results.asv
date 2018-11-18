@@ -1,0 +1,12 @@
+clear all, close all
+NN_results = load('results_NN');
+rec_results = load('results_rec');
+
+figure()
+plot(NN_results.n_eigenvecs, NN_results.accuracy * 100, 'x')
+hold on
+plot(rec_results.n_eigenvecs, NN_results.accuracy * 100, 'x')
+
+xlabel('Number of eigenvectors used')
+ylabel('Accuracy (%)')
+

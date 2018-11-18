@@ -112,60 +112,69 @@ def classify_Rec(query_images, eigenvectors, means):
 
 
 if __name__ == '__main__':
-    NN = True
+    accuracy = []
+    durations = []
+    parameter_list = range(10, 363, 20)
+    DISPLAY = False
+    for how_many_eigenvectors in parameter_list:
+        NN = True
+        # how_many_eigenvectors = -1
+        if NN:
+            [training_data, testing_data], means = import_processing(INPUT_PATH)
+            eigenvalues, eigenvectors = find_eigenvectors(compute_S(training_data, low_res=True), how_many_eigenvectors)
+            eigenvectors = retrieve_low_eigvecs(eigenvectors, training_data)
+            projections_training, projections_test = find_projection(eigenvectors, training_data),\
+                                                     find_projection(eigenvectors, testing_data)
+            t1 = time.time()
+            recognised_faces = classify(projections_training, projections_test)
+            t2 = time.time()
+            true_faces = create_ground_truth()
 
+            bool_recognised, acc = bool_and_accuracy(true_faces, recognised_faces)
+            accuracy.append(acc)
+            conf_matrix = confusion_matrix(true_faces, recognised_faces)
+            if DISPLAY:
+                plot_confusion_matrix(conf_matrix, classes=np.arange(0, NUMBER_PEOPLE), normalize=True)
+                failures = identify_failure(bool_recognised)
 
-    if NN:
-        [training_data, testing_data], means = import_processing(INPUT_PATH)
-        eigenvalues, eigenvectors = find_eigenvectors(compute_S(training_data, low_res=True), -1)
-        eigenvectors = retrieve_low_eigvecs(eigenvectors, training_data)
-        projections_training, projections_test = find_projection(eigenvectors, training_data),\
-                                                 find_projection(eigenvectors, testing_data)
-        t1 = time.time()
-        recognised_faces = classify(projections_training, projections_test)
-        t2 = time.time()
-        true_faces = create_ground_truth()
-    
-        bool_recognised, accuracy = bool_and_accuracy(true_faces, recognised_faces)
+                display_eigenvectors(testing_data[:, failures]+means[0][:, None])
+                success = identify_success(bool_recognised)
+                display_eigenvectors(testing_data[:, success] + means[0][:, None])
+            print('Accuracy of', acc)
+            name = 'results_' + 'NN'
 
-        conf_matrix = confusion_matrix(true_faces, recognised_faces)
-        plot_confusion_matrix(conf_matrix, classes=np.arange(0, NUMBER_PEOPLE), normalize=True)
-        failures = identify_failure(bool_recognised)
+        else:
+            [training_data, testing_data], means = import_processing(INPUT_PATH, class_means=True)
+            eigenvectors = []
+            for i in range(NUMBER_PEOPLE):
+                eigv, eigvec = find_eigenvectors(compute_S(training_data[:, i*TRAINING_SPLIT:(i+1)*TRAINING_SPLIT],
+                                                           low_res=True), -1)
+                eigvec = retrieve_low_eigvecs(eigvec, training_data[:, i*TRAINING_SPLIT:(i+1)*TRAINING_SPLIT])
+                # no_non_zero = count_non_zero(eigv)
+                eigvec = eigvec[:, :how_many_eigenvectors]
+                eigenvectors.append(eigvec)
+            t1 = time.time()
+            classifications = classify_Rec(testing_data, eigenvectors, means)
+            t2 = time.time()
+            true_faces = create_ground_truth()
+            bool_recognised, acc = bool_and_accuracy(true_faces, classifications)
+            accuracy.append(acc)
+            conf_matrix = confusion_matrix(true_faces, classifications)
+            print('Accuracy of', acc)
+            name = 'results_' + 'rec'
+            if DISPLAY:
+                plot_confusion_matrix(conf_matrix, classes=np.arange(0, NUMBER_PEOPLE), normalize=True)
 
-        display_eigenvectors(testing_data[:, failures]+means[0][:, None])
-        success = identify_success(bool_recognised)
-        display_eigenvectors(testing_data[:, success] + means[0][:, None])
-        print(accuracy)
-        name = 'results_' + 'NN'
-    
-        #cv2.imshow('Confusion matrix', conf_matrix)
-        # cv2.waitKey()
-        # print(np.unique(conf_matrix))
-    else:
-        [training_data, testing_data], means = import_processing(INPUT_PATH, class_means=True)
-        eigenvectors = []
-        for i in range(NUMBER_PEOPLE):
-            eigv, eigvec = find_eigenvectors(compute_S(training_data[:, i*TRAINING_SPLIT:(i+1)*TRAINING_SPLIT],
-                                                       low_res=True), -1)
-            eigvec = retrieve_low_eigvecs(eigvec, training_data[:, i*TRAINING_SPLIT:(i+1)*TRAINING_SPLIT])
-            no_non_zero = count_non_zero(eigv)
-            eigvec = eigvec[:, :no_non_zero]
-            eigenvectors.append(eigvec)
-        t1 = time.time()
-        classifications = classify_Rec(testing_data, eigenvectors, means)
-        t2 = time.time()
-        true_faces = create_ground_truth()
-        bool_recognised, accuracy = bool_and_accuracy(true_faces, classifications)
-        conf_matrix = confusion_matrix(true_faces, classifications)
-        plot_confusion_matrix(conf_matrix, classes=np.arange(0, NUMBER_PEOPLE), normalize=True)
-        print(accuracy)
-        name = 'results_' + 'rec'
+                failures = identify_failure(bool_recognised)
 
-    duration = t2-t1
+                display_eigenvectors(testing_data[:, failures] + means[0][:, None])
+                success = identify_success(bool_recognised)
+                display_eigenvectors(testing_data[:, success] + means[0][:, None])
 
-    print(duration)
+        duration = t2-t1
+        durations.append(duration)
 
-    save_values({'accuracy': np.array(accuracy), 'duration': duration}, name=name)
+        save_values({'accuracy': np.array(accuracy), 'duration': np.array(durations), 'n_eigenvecs': np.array(parameter_list)}, name=name)
     
     # print(recognised_faces)
     # print(bool_recognised)
