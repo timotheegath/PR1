@@ -2,6 +2,7 @@
 
 
 \usepackage{graphicx}
+\usepackage{subcaption}
 \title{Coursework 1: Face recognition }
 \author{TGATH LLAG}
 \begin{document}
@@ -55,23 +56,25 @@ The low-dimensional computation proved to be 72 times faster than the standard c
 \subsubsection{Part a)}
 The training data was used to find the eigenfaces. The testing data was projected in the eigenspace, and it was attempted to reconstruct it by using a lower or equal amount of eigenfaces.
 
-Quantitatively, the distortion (reconstruction error) is ever decreasing as the number of eigenvectors used for reconstruction increases, as shown in Figure \ref{fig:distortion}. However, the improvement gets slower as the number of eigenvectors increases, hinting that the full number of eigenvectors is not necessary to achieve a 'good-enough' reconstruction.
+Quantitatively, the distortion (reconstruction error) is ever decreasing as the number of eigenvectors used for reconstruction increases, as shown in Figure \ref{fig:distortion}. However, the improvement gets slower as the number of eigenvectors increases, hinting that the full number of eigenvectors is not necessary to achieve a 'good-enough' reconstruction. As expected, when the full number of eigenvectors is used, the reconstruction is perfect (distortion of the order of $10^{-19}$)
 
-This shows qualitatively in Figure \ref{fig:reconstr_faces}: the faces get reliably recognisable with around $M =150$ eigenvectors  
+This shows qualitatively in Figure \ref{fig:reconstr_faces}: the faces get reliably recognisable with around $M =150$ eigenvectors, whereas complex shadowing details appear only when more eigenfaces are used.
 \begin{figure}
     \centering
-    \begin{subfigure}
-        \includegraphics[width=0.5\textwidth]{../results/ex1aa/dist_plot.png}
-        \caption{Distortion of the reconstructed images when varying the number of eigenvectors used}
-        \label{fig:distortion}
+    \begin{subfigure}[b]{0.5\textwidth}
+        \includegraphics[width=\textwidth]{../results/ex1aa/dist_plot.png}
+        \caption{Normal scale}
+        
         \quad
     \end{subfigure}
-    \begin{subfigure}
-        \includegraphics[width=0.5\textwidth]{../results/ex1aa/dist_logplot.png}
-        \caption{Distortion of the reconstructed images when varying the number of eigenvectors used}
-        \label{fig:distortion}
+    \begin{subfigure}[b]{0.5\textwidth}
+        \includegraphics[width=\textwidth]{../results/ex1aa/dist_logplot.png}
+        \caption{Y axis in log scale}
+        
         \quad
     \end{subfigure}
+    \caption{Distortion of the reconstructed images when varying the number of eigenvectors used}
+    \label{fig:distortion}
 \end{figure}
 \begin{figure}
     \centering
@@ -79,6 +82,23 @@ This shows qualitatively in Figure \ref{fig:reconstr_faces}: the faces get relia
     \caption{Reconstructed faces, M indicates the number of eigenvectors used}
     \label{fig:reconstr_faces}
 \end{figure}
+
+\subsubsection{Part b)}
+Table \ref{tab:NNvsRec} shows the 
+
+\begin{table}[]
+    \centering
+    \begin{tabular}{c||c c}
+         & NN method & Reconstruction method  \\\hline \hline\\
+         Accuracy &  55 \% & 68.5 \% \\
+         Duration of classification & 0.606 s & 1.05 s \\
+         Peak memory usage & 104.7 MiB & 94.7 MiB
+         
+    \end{tabular}
+    \caption{Performance comparison of face recognition using the NN method and the reconstruction method}
+    \label{tab:NNvsRec}
+\end{table}
+
 
 
 %\bibliography{IEEEabrv,./refs}
