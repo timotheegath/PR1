@@ -1,5 +1,7 @@
 import numpy as np
 import scipy.io
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
 from scipy.io import loadmat
 from scipy import spatial
 from sklearn.preprocessing import normalize
@@ -21,6 +23,41 @@ M_PCA = 0
 M_LDA = 0
 SB_RANK = 0
 SW_RANK = 0
+
+def plot_confusion_matrix(cm, classes,
+                          normalize=False,
+                          title='Confusion matrix',
+                          cmap=plt.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    """
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    print(cm)
+
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    # for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+    #     plt.text(j, i, format(cm[i, j], fmt),
+    #              horizontalalignment="center",
+    #              color="white" if cm[i, j] > thresh else "black")
+
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+    plt.tight_layout()
+    plt.show()
 
 def import_processing(data, class_means=False):
 
@@ -175,7 +212,7 @@ if __name__ == '__main__':
 
     M_PCAs = []
     accuracies = []
-
+    DISPLAY = True
     while M_PCA_reduction > -312:
 
         [training_data, testing_data], means = import_processing(INPUT_PATH)
@@ -199,7 +236,9 @@ if __name__ == '__main__':
         classification = classify(reference_LDA_coeffs, candidate_LDA_coeffs)
 
         ground_truth = create_ground_truth()
-
+        conf_matrix = confusion_matrix(ground_truth, classification)
+        if DISPLAY:
+            plot_confusion_matrix(conf_matrix, np.arange(0, NUMBER_PEOPLE))
         bool_array, accuracy = bool_and_accuracy(ground_truth, classification)
 
         print(accuracy)
