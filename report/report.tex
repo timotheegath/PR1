@@ -20,21 +20,21 @@ The faces dataset consisted of 10 pictures for each of the 52 different individu
 Standard PCA was performed and the eigenfaces in Figure \ref{fig:eigfaces1} were found, along with the eigenvalues in Figure \ref{fig:eigvals1}. The data was normalised by subtracting the mean face shown in Figure \ref{fig:mean_im1}. In order to identify relevant principal components, the eigenvalues of the covariance matrix with a real part lower than 0.1 were discarded (the number was chosen by inspection). 363 eigenfaces and eigenvalues remained after this thresholding operation, meaning that 363 eigenfaces were relevant to optimally reduce the dimensionality of the data. Notably, for $N$ training samples, the number of relevant eigenvalues was found to be $N - 1$. This is expected, since the largest vector subspace that can be defined with N points is R(N-1).
 % How do you choose how many eigenvectors you'll actually keep ?
 
-\begin{figure}
+\begin{figure}[htb!]
     \centering
     \includegraphics[width=0.4\textwidth]{../results/ex1a/eigenfaces.png}
     \caption{Eigenfaces with the 30 largest eigenvalues}
     \label{fig:eigfaces1}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[htb!]
     \centering
     \includegraphics[width=0.4\textwidth]{../results/ex1a/eigenvalues.png}
     \caption{Real part of all PCA eigenvalues (semi-log-y axis). Negative eigenvalues were discarded but were close to 0.}
     \label{fig:eigvals1}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[htb!]
     \centering
     \includegraphics[width=0.1\textwidth]{../results/ex1a/mean_image.png}
     \caption{Mean image of the training dataset}
@@ -45,9 +45,9 @@ Standard PCA was performed and the eigenfaces in Figure \ref{fig:eigfaces1} were
 The low-dimensional computation returns as expected $N - 1$ eigenvalues and eigenvectors which we then compare to the original ones from Part b) in Figure \ref{fig:eig_diff1}. We can notice that there is no difference in the eigenvalue's values as well as the eigenvector's directions (by normalising them and taking their dot product). 
 The low-dimensional computation proved to be 72 times faster than the standard computation, even though it involved more steps, since the dimensionality of the matrix from which the eigenvectors were computed was lower. 
 % What's a con of this method ?
-\begin{figure}
+\begin{figure}[htb!]
     \centering
-    \includegraphics[width=0.5\textwidth]{../results/ex1b/DIfference_eig.png}
+    \includegraphics[width=\linewidth]{../results/ex1b/DIfference_eig.png}
     \caption{Comparison of the high-dimensional and low-dimensional computations of eigenvalues and eigenvectors. Negative dot product values indicate exactly opposed vectors.}
     \label{fig:eig_diff1}
 \end{figure}
@@ -59,15 +59,15 @@ The training data was used to find the eigenfaces. The testing data was projecte
 Quantitatively, the distortion (reconstruction error) is ever decreasing as the number of eigenvectors used for reconstruction increases, as shown in Figure \ref{fig:distortion}. However, the improvement gets slower as the number of eigenvectors increases, hinting that the full number of eigenvectors is not necessary to achieve a 'good-enough' reconstruction. As expected, when the full number of eigenvectors is used, the reconstruction is perfect (distortion of the order of $10^{-19}$)
 
 This shows qualitatively in Figure \ref{fig:reconstr_faces}: the faces get reliably recognisable with around $M =150$ eigenvectors, whereas complex shadowing details appear only when more eigenfaces are used.
-\begin{figure}
+\begin{figure}[htb!]
     \centering
-    \begin{subfigure}[b]{0.5\textwidth}
+    \begin{subfigure}[b]{\linewidth}
         \includegraphics[width=\textwidth]{../results/ex1aa/dist_plot.png}
         \caption{Normal scale}
         
         \quad
     \end{subfigure}
-    \begin{subfigure}[b]{0.5\textwidth}
+    \begin{subfigure}[b]{\linewidth}
         \includegraphics[width=\textwidth]{../results/ex1aa/dist_logplot.png}
         \caption{Y axis in log scale}
         
@@ -76,9 +76,9 @@ This shows qualitatively in Figure \ref{fig:reconstr_faces}: the faces get relia
     \caption{Distortion of the reconstructed images when varying the number of eigenvectors used}
     \label{fig:distortion}
 \end{figure}
-\begin{figure}
+\begin{figure}[htb!]
     \centering
-    \includegraphics[width=0.5\textwidth]{../results/ex1aa/face_plots.png}
+    \includegraphics[width=\linewidth]{../results/ex1aa/face_plots.png}
     \caption{Reconstructed faces, M indicates the number of eigenvectors used}
     \label{fig:reconstr_faces}
 \end{figure}
@@ -109,6 +109,8 @@ Figure \ref{fig:} shows the results of the experiment where the number of retain
 In Figure \ref{fig:} we can see results of decreasing $M_{pca}$ while retaining all the fisherfaces ($c-1$).
 Our results show no particular trend in decreased classification accuracy. This supports the fact that we can learn much better features when applying discriminative, supervised algorithm, making the model more successful in classifying sparse features.
 
+
+
 \subsubsection{Ranks of the scatter matrices}
 The scatter matrices are defined as sums of outer vector products, all of rank 1.
 We confirm that the rank of the within-class-scatter matrix (Sw) is $N - c$. To obtain individual class scatter matrices, Si, we sum all the outer products of each class vector, from which the class mean was removed, with itself. Since the mean is a linear combination of the class vectors, we lose 1 rank in the Si matrix (rank $Ni - 1$, where Ni is the number of class vectors). The Sw matrix is the sum of all the Si matrices giving the rank $c(Ni - 1) = N - c$, where N is the total number of the training vectors.
@@ -116,7 +118,7 @@ We confirm that the rank of the within-class-scatter matrix (Sw) is $N - c$. To 
 The rank of the between-class-scatter matrix (Sb) is found to be $c - 1$, as expected. Sb is similarly obtained as a sum of matrices obtained from vector outer products with itself. Here, each class-mean vector has the global-mean vector removed, and then expanded into a matrix of rank 1. As before, the global-mean vector is a linear combination of class-mean vectors, which is why we lose one rank, and after summation we end up with the matrix of rank $c - 1$.
 
 \subsubsection{Confusion matrix}
-\begin{figure}
+\begin{figure}[htb!]
     \centering
     \includegraphics[width = \linewidth]{../results/ex2LDA/Figure_1.png}
     \caption{Confusion matrix}
@@ -130,7 +132,7 @@ Our model consisted of a number $T$ of sub-models made of one PCA unit and one f
 \subsubsection{Bagging}
 
 The training data was randomised and split identically to Exercise 1. However, once the training data had been obtained, it was sampled into $T$ bags, by selecting a data point uniformly from the training dataset, with replacement. We denote the amount of data per bag with $n_t$. This bagging technique contributed to the randomness of each unit and thus their decorrelation, which will be investigated later. Figure \ref{fig:acc_vs_bag} highlights the gain in robustness that comes with bigger bag sizes. The repeated data percentage was found to be $37 \%$ for $n_t = N$, and $40 \%$ for $n_t = 450$. No significant changes were observed in terms of correlation.
-\begin{figure}
+\begin{figure}[htb!]
     \centering
     \includegraphics[width=\linewidth]{../results/ex2LDAEnsemble/acc_vs_bag_size.png}
     \caption{The bag size $n_t$ was equal for all units. The fusion rule was a product, T=8}
@@ -143,7 +145,7 @@ A bag size of $n_t = 400$ was chosen as a default value for the remaining experi
 The role of $M_{PCA}^t$ and $M_{LDA}^t$ was investigated by varying their value between 0 and their default value ($N - c$ and $c - 1$) and recording the classification accuracy over the testing data. The results, shown in Figure \ref{fig:mld_acc}, prove that the number of fisherfaces used for classification plays an important role in the discriminatory capability of the algorithm. The success rate quickly dropped as the fisherfaces became more sparse. Conversely, the number of eigenfaces plays a less important role: the classification accuracy experiences little change as the PCA subspace gets dimensionally reduced. As we have seen before in B), it seems as the LDA can deal with more sparse feature space equivalently well as with more dense feature spaces.
 
 
-\begin{figure}
+\begin{figure}[htb!]
     \centering
     \begin{subfigure}[b]{0.5\textwidth}
         \includegraphics[width=\textwidth]{../results/ex2LDAEnsemble/acc_vs_mpca.png}
@@ -164,7 +166,7 @@ The role of $M_{PCA}^t$ and $M_{LDA}^t$ was investigated by varying their value 
 \subsubsection{Randomness and correlation}
 We generated three different models, using the default parameters ($T = 8, n_t = 400$). In Figure \ref{fig:corrs}, the leftmost model was generated without using bagging (so using a fixed training data), and with default $M_{LDA}$ and $M_{PCA}$ values. As expected, all 8 units are fully correlated. We then introduce a first element of randomness by randomising $M_{LDA}$ and $M_{PCA}$ uniformly between a fourth of their default value and their default value, leading to the second correlation matrix. Finally, we add bagging to the algorithm and get the strongly decorrelated model, represented by the third correlation matrix. 
 
-\begin{figure}
+\begin{figure}[htb!]
     \centering
     \includegraphics[width=\linewidth]{../results/ex2LDAEnsemble/correlation.png}
     \caption{Correlation matrix between the units. $T = 8$. The more randomness is introduced to the model, the more decorrelated the model (from left to right)}
