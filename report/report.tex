@@ -106,11 +106,11 @@ The data was split the same way for PCA-LDA algorithm training, with 70\% used f
 \subsection{Recognition accuracy}
 Figure \ref{fig:} shows the results of the experiment where the number of retained fisher-faces ($M_{lda}$) is gradually decreased, and the dimension of the PCA subspace ($M_{pca}$) is kept as N-c. We can see that the recognition accuracy worsens as the $M_{lda}$ decreases.
 
-In Figure \ref{fig:} we can see results of decreasing $M_{pca}$ while retaing all the fisherfaces ($c-1$).
-Our results show no particular trend in decreased classification accuracy. This supports the fact that we can learn much better features when applying supervised training with knowledge of classes, making the model more successful in sparse feature space.
+In Figure \ref{fig:} we can see results of decreasing $M_{pca}$ while retaining all the fisherfaces ($c-1$).
+Our results show no particular trend in decreased classification accuracy. This supports the fact that we can learn much better features when applying discriminative, supervised algorithm, making the model more successful in classifying sparse features.
 
 \subsection{Ranks of the scatter matrices}
-The scatter matrices are defined as sums of outer vector products. We confirm that the rank of the within-class-scatter matrix (Sw) is N-c. As the matrix obtained by vector outer product can have at most rank 1, and these outer products are summed for each class, the rank of the summed matrix would be Ni, where Ni is the number of vectors per class. 
+The scatter matrices are defined as sums of outer vector products. We confirm that the rank of the within-class-scatter matrix (Sw) is N-c. To obtain the class scatter matrix ($Si$) we remove the class-mean vector from each vector in the class, a
 
 \subsection{PCA-LDA Ensemble}
 
@@ -126,6 +126,24 @@ The training data was randomised and split identically to Exercise 1. However, o
     \label{fig:acc_vs_bag}
 \end{figure}
 A bag size of $T = 400$ was chosen as a default value for the remaining experiments.
+\subsubsection{$M_{PCA}^t$ and $M_{LDA}^t$}:
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{0.5\textwidth}
+        \includegraphics[width=\textwidth]{../results/ex2LDAEnsemble/acc_vs_M.png}
+        \caption{Normal scale}
+        
+        \quad
+    \end{subfigure}
+    \begin{subfigure}[b]{0.5\textwidth}
+        \includegraphics[width=\textwidth]{../results/ex1aa/dist_logplot.png}
+        \caption{Y axis in log scale}
+        
+        \quad
+    \end{subfigure}
+    \caption{Distortion of the reconstructed images when varying the number of eigenvectors used}
+    \label{fig:distortion}
+\end{figure}
 
 
 %\bibliography{IEEEabrv,./refs}
