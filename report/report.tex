@@ -103,14 +103,17 @@ Table \ref{tab:NNvsRec} shows the
 \subsection{PCA-LDA}
 The data was split the same way for PCA-LDA algorithm training, with 70\% used for training and the rest for testing.
 
-\subsection{Recognition accuracy}
+\subsubsection{Recognition accuracy}
 Figure \ref{fig:} shows the results of the experiment where the number of retained fisher-faces ($M_{lda}$) is gradually decreased, and the dimension of the PCA subspace ($M_{pca}$) is kept as N-c. We can see that the recognition accuracy worsens as the $M_{lda}$ decreases.
 
 In Figure \ref{fig:} we can see results of decreasing $M_{pca}$ while retaining all the fisherfaces ($c-1$).
 Our results show no particular trend in decreased classification accuracy. This supports the fact that we can learn much better features when applying discriminative, supervised algorithm, making the model more successful in classifying sparse features.
 
-\subsection{Ranks of the scatter matrices}
-The scatter matrices are defined as sums of outer vector products. We confirm that the rank of the within-class-scatter matrix (Sw) is N-c. To obtain the class scatter matrix ($Si$) we remove the class-mean vector from each vector in the class, a
+\subsubsection{Ranks of the scatter matrices}
+The scatter matrices are defined as sums of outer vector products, all of rank 1.
+We confirm that the rank of the within-class-scatter matrix (Sw) is $N - c$. To obtain individual class scatter matrices, Si, we sum all the outer products of each class vector, from which the class mean was removed, with itself. Since the mean is a linear combination of the class vectors, we lose 1 rank in the Si matrix (rank $Ni - 1$, where Ni is the number of class vectors). The Sw matrix is the sum of all the Si matrices giving the rank $c(Ni - 1) = N - c$, where N is the total number of the training vectors.
+
+
 
 \subsection{PCA-LDA Ensemble}
 
@@ -118,33 +121,40 @@ Our model consisted of a number $T$ of sub-models made of one PCA unit and one f
 
 \subsubsection{Bagging}
 
-The training data was randomised and split identically to Exercise 1. However, once the training data had been obtained, it was sampled into $T$ bags, by selecting a data point uniformly from the training dataset, with replacement. This bagging technique contributed to the randomness of each unit and thus their decorrelation.
+The training data was randomised and split identically to Exercise 1. However, once the training data had been obtained, it was sampled into $T$ bags, by selecting a data point uniformly from the training dataset, with replacement. We denote the amount of data per bag with $n_t$. This bagging technique contributed to the randomness of each unit and thus their decorrelation, which will be investigated later. Figure \ref{fig:acc_vs_bag} highlights the gain in robustness that comes with bigger bag sizes. The repeated data percentage was found to be $37 \%$ for $n_t = N$, and $40 \%$ for $n_t = 450$. No significant changes were observed in terms of correlation.
 \begin{figure}
     \centering
     \includegraphics[width=0.7\linewidth]{../results/ex2LDAEnsemble/acc_vs_bag_size.png}
-    \caption{The bag size was varied for all units simultaneously. The fusion rule was a product, T=8}
+    \caption{The bag size $n_t$ was equal for all units. The fusion rule was a product, T=8}
     \label{fig:acc_vs_bag}
 \end{figure}
-A bag size of $T = 400$ was chosen as a default value for the remaining experiments.
+
+A bag size of $n_t = 400$ was chosen as a default value for the remaining experiments.
+
 \subsubsection{$M_{PCA}^t$ and $M_{LDA}^t$}:
+The role of $M_{PCA}^t$ and $M_{LDA}^t$ was investigated by varying their value between 0 and their default value ($N - c$ and $c - 1$) and recording the classification accuracy over the testing data. The results, shown in Figure \ref{fig:mld_acc}, prove that the number of fisherfaces used for classification plays an important role in the discriminatory capability of the algorithm. The success rate quickly dropped as the fisherfaces became more sparse. Conversely, the number of eigenfaces plays a less important role: the classification accuracy experiences little change as the PCA subspace gets dimensionally reduced. As we have seen before in B), it seems as the LDA can deal with more sparse feature space equivalently well as with more dense feature spaces.
+
+
 \begin{figure}
     \centering
     \begin{subfigure}[b]{0.5\textwidth}
-        \includegraphics[width=\textwidth]{../results/ex2LDAEnsemble/acc_vs_M.png}
-        \caption{Normal scale}
+        \includegraphics[width=\textwidth]{../results/ex2LDAEnsemble/acc_vs_mpca.png}
+        \caption{Changing the $M_{PCA}$ values for all units simultaneously. Default value of 312}
         
         \quad
     \end{subfigure}
     \begin{subfigure}[b]{0.5\textwidth}
-        \includegraphics[width=\textwidth]{../results/ex1aa/dist_logplot.png}
-        \caption{Y axis in log scale}
+        \includegraphics[width=\textwidth]{../results/ex2LDAEnsemble/acc_vs_mlda.png}
+        \caption{Changing the $M_{LDA}$ values for all units simultaneously. Default value of 51}
         
         \quad
     \end{subfigure}
-    \caption{Distortion of the reconstructed images when varying the number of eigenvectors used}
-    \label{fig:distortion}
+    \caption{Evolution of classification accuracy when changing the model parameters}
+    \label{fig:mld_acc}
 \end{figure}
 
+\subsubsection{Randomness and correlation}
+In this sec
 
 %\bibliography{IEEEabrv,./refs}
 %\bibliographystyle{IEEEtran}
