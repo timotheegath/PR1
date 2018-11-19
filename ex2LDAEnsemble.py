@@ -466,7 +466,7 @@ if __name__ == '__main__':
         # ensemble.save()
         merged_dict = {varying_parameter: parameter_values, 'accuracy': accuracies, 'training_times': training_times,
                        'testing_times': testing_times, 'repeats_in_bag':  repeats, 'M_LDA': M_LDAs}
-        save_values(merged_dict, 'acc_time_varying_' + varying_parameter + 'M_LDA_is_true')
+        save_values(merged_dict, 'acc_time_varying_' + varying_parameter + parameters['combination'] + 'M_LDA_is_true')
 
 
 
