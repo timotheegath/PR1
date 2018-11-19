@@ -440,8 +440,8 @@ def create_ground_truth():
 
 if __name__ == '__main__':
 
-    varying_parameter = 'LDA_reduction'
-    parameter_values = np.arange(0, -51, -5)
+    varying_parameter = 'PCA_reduction'
+    parameter_values = np.arange(0, -312, -20)
     training_times = np.zeros_like(parameter_values).astype(np.float32)
     testing_times = np.zeros_like(parameter_values).astype(np.float32)
     accuracies = np.zeros_like(parameter_values).astype(np.float32)

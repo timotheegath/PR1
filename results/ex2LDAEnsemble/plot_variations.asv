@@ -19,15 +19,12 @@ figure()
 mean_corr  = squeeze(mean(corrs, 2));
 
 stages = size(mean_corr, 1)
-for i = 1:size(mean_corr, 1)
-   subplot(round(stages/4), 4, i) 
-   imagesc(squeeze(mean_corr(i, :, :)))
-   colorbar
-   daspect([1 1 1])
-   title(['M_PCA: ', num2str(M_PCA(i, 1))])
-
+for i = 1:size(mean_corr, 1):
+   subplot(stages, ) 
 end
 disp(size(mean_corr))
+imagesc(squeeze(mean_corr(1, :, :)))
+colorbar 
 
 
 
