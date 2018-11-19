@@ -238,7 +238,7 @@ if __name__ == '__main__':
         ground_truth = create_ground_truth()
         conf_matrix = confusion_matrix(ground_truth, classification)
         if DISPLAY:
-            plot_confusion_matrix(conf_matrix, np.arange(0, NUMBER_PEOPLE))
+            plot_confusion_matrix(conf_matrix, np.arange(0, NUMBER_PEOPLE), normalize=True)
         bool_array, accuracy = bool_and_accuracy(ground_truth, classification)
 
         print(accuracy)
