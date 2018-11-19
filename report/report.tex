@@ -15,9 +15,9 @@ The abstract
 \section{Question 1}
 \subsection{Eigenfaces}
 \subsubsection{Part a)}
-The faces dataset consisted of 10 pictures of each of the 52 different individuals. Hence, it was decided to split the data into 7 pictures per individual for training and 3 pictures per individual for testing, resulting in a total of 364 training images. This allowed to train the PCA on all available classes and run meaningful tests on all images. Moreover, the order of pictures per individual was randomised before to remove any possible correlation between the complexity/characteristics of the pictures and their order. 
+The faces dataset consisted of 10 pictures for each of the 52 different individuals. Hence, it was decided to split the data into 7 pictures per individual for training and 3 pictures per individual for testing, resulting in a total of 364 training images. This allowed to train the PCA algorithm on all available classes and run meaningful tests on all images. Moreover, the order of pictures per individual was randomised before to remove any possible correlation between the complexity/characteristics of the pictures and their order, hinted by previous experiments. We found that with the added random component, overall, the classification accuracy improved from the initial experiments where first 7  pictures per individual were taken as the training set.
 
-Standard PCA was performed and the eigenfaces in Figure \ref{fig:eigfaces1} were found, along with the eigenvalues in Figure \ref{fig:eigvals1}. The data was normalised by subtracting the mean face shown in Figure \ref{fig:mean_im1}. In order to identify relevant principal components, the eigenvalues of the covariance matrix with a real part lower than 0.1 were discarded (the number was chosen by inspection). 363 eigenfaces and eigenvalues remained after this thresholding operation, meaning that 363 eigenfaces were relevant to optimally reduce the dimensionality of the data. Notably, for $N$ training samples, the number of relevant eigenvalues was found to be $N - 1$. 
+Standard PCA was performed and the eigenfaces in Figure \ref{fig:eigfaces1} were found, along with the eigenvalues in Figure \ref{fig:eigvals1}. The data was normalised by subtracting the mean face shown in Figure \ref{fig:mean_im1}. In order to identify relevant principal components, the eigenvalues of the covariance matrix with a real part lower than 0.1 were discarded (the number was chosen by inspection). 363 eigenfaces and eigenvalues remained after this thresholding operation, meaning that 363 eigenfaces were relevant to optimally reduce the dimensionality of the data. Notably, for $N$ training samples, the number of relevant eigenvalues was found to be $N - 1$. This is expected, since the largest vector subspace that can be defined with N points is R(N-1).
 % How do you choose how many eigenvectors you'll actually keep ?
 
 \begin{figure}
@@ -99,6 +99,20 @@ Table \ref{tab:NNvsRec} shows the
     \label{tab:NNvsRec}
 \end{table}
 
+\section{Question 3}
+\subsection{PCA-LDA}
+The data was split the same way for PCA-LDA algorithm training, with 70\% used for training and the rest for testing.
+
+Figure \ref{fig:} shows the results of the experiment where the number of retained fisher-faces ($M_{lda}$) is gradually decreased, and the dimension of the PCA subspace is kept as N-c. We can see that the accuracy worsens as the $M_{lda}$ decreases.
+
+
+\subsection{PCA-LDA Ensemble}
+
+Our model consisted of a number $T$ of sub-models made of one PCA unit and one following LDA unit. In each unit $t$, the PCA unit reduced the dimensionality of its input by applying the transform $W_{PCA}^t$, made of $M_{PCA}^t$ eigenfaces. The reduced data was then transformed by $W_{LDA}^t$, made of $M_{LDA}^t$ fisherfaces. By default, $M_{PCA}^t = N - c$ and $M_{LDA}^t = c - 1$.
+
+\subsubsection{Bagging}
+
+The training data was randomised and split identically to Exercise 1. However, once the training data had been obtained, it was sampled into $T$ bags, by selecting a data point uniformly from the training dataset, with replacement. This bagging technique contributed to the randomness of each unit and thus their decorrelation.
 
 
 %\bibliography{IEEEabrv,./refs}
