@@ -11,7 +11,7 @@ from in_out import display_eigenvectors, save_values
 
 DEFAULT_WLDA = np.zeros((2576, 1))
 INPUT_PATH = 'data/face.mat'
-parameters = {'split': 7, 'n_units': 8, 'M_PCA': False, 'M_LDA': True, 'bag_size': 200, 'combination': 'product'}
+parameters = {'split': 7, 'n_units': 8, 'M_PCA': False, 'M_LDA': False, 'bag_size': 200, 'combination': 'product', 'PCA_reduction': 0, 'LDA_reduction': 0}
 # A true value for MLDA and MPCA randomizes their values to be between 1/4 and 4/4 of their original value
 # The combination defines how the units' outputs are combined. For now, only mean is implemented but product needs to
 # be implemented
@@ -177,7 +177,7 @@ class PCA_unit():
             low_S = compute_S(training_data_norm, low_res=True)
             eig_val, eig_vec = find_eigenvectors(low_S, how_many=-1)
             eig_vec = retrieve_low_eigvecs(eig_vec, training_data_norm)
-            M_PCA = training_data_norm.shape[1] - NUMBER_PEOPLE
+            M_PCA = training_data_norm.shape[1] - NUMBER_PEOPLE + parameters['PCA_reduction']
             M_PCA -= parameters['M_PCA']*np.random.randint(int(-3*M_PCA/4), 0)# hyperparameter Mpca <= N-c
             print('M_PCA: ', M_PCA)
             eig_vec_reduced = eig_vec[:, :M_PCA]
@@ -254,7 +254,7 @@ class LDA_unit():
         S = np.matmul(np.linalg.inv(self.Sw), self.Sb)
         eig_vals, fisherfaces = find_eigenvectors(S, how_many=-1)
         eig_vals = np.real(eig_vals)
-        self.M_LDA = NUMBER_PEOPLE-1  # hyperparameter Mlda <= c-1 -> there should be 51 non_zero
+        self.M_LDA = NUMBER_PEOPLE-1 + parameters['LDA_reduction']  # hyperparameter Mlda <= c-1 -> there should be 51 non_zero
         self.M_LDA -= parameters['M_LDA'] * np.random.randint(int(-3*self.M_LDA/4), 0)
         print('M_LDA :', self.M_LDA)
 
