@@ -191,7 +191,8 @@ class PCA_unit():
             eig_val, eig_vec = find_eigenvectors(low_S, how_many=-1)
             eig_vec = retrieve_low_eigvecs(eig_vec, training_data_norm)
             M_PCA = training_data_norm.shape[1] - NUMBER_PEOPLE + parameters['PCA_reduction']
-            M_PCA -= parameters['M_PCA']*np.random.randint(int(-3*M_PCA/4), 0)# hyperparameter Mpca <= N-c
+            if parameters['M_PCA']:
+                M_PCA -= np.random.randint(int(-3*M_PCA/4), 0)# hyperparameter Mpca <= N-c
             print('M_PCA: ', M_PCA)
             eig_vec_reduced = eig_vec[:, :M_PCA]
             return eig_vec_reduced, M_PCA
@@ -268,7 +269,8 @@ class LDA_unit():
         eig_vals, fisherfaces = find_eigenvectors(S, how_many=-1)
         eig_vals = np.real(eig_vals)
         self.M_LDA = NUMBER_PEOPLE-1 + parameters['LDA_reduction']  # hyperparameter Mlda <= c-1 -> there should be 51 non_zero
-        self.M_LDA -= parameters['M_LDA'] * np.random.randint(int(-3*self.M_LDA/4), 0)
+        if parameters['M_LDA']:
+            self.M_LDA -= np.random.randint(int(-3*self.M_LDA/4), 0)
         print('M_LDA :', self.M_LDA)
 
         self.Wlda = fisherfaces[:, :self.M_LDA]
@@ -442,6 +444,7 @@ if __name__ == '__main__':
 
     varying_parameter = 'PCA_reduction'
     parameter_values = np.arange(0, -312, -20)
+
     training_times = np.zeros_like(parameter_values).astype(np.float32)
     testing_times = np.zeros_like(parameter_values).astype(np.float32)
     accuracies = np.zeros_like(parameter_values).astype(np.float32)
