@@ -437,9 +437,6 @@ def create_ground_truth():
     return true_individual_index
 
 
-
-
-
 if __name__ == '__main__':
 
     varying_parameter = 'PCA_reduction'
