@@ -173,33 +173,42 @@ def bool_and_accuracy(ground_truth, prediction):
 
 if __name__ == '__main__':
 
-    [training_data, testing_data], means = import_processing(INPUT_PATH)
-    Wpca = reduce_by_PCA(training_data, means)
-    class_means = compute_class_means(training_data)
-    class_scatters = compute_class_scatters(training_data, class_means)
-    Sb = compute_Sb(class_means)
-    SB_RANK =  np.linalg.matrix_rank(Sb)      # Rank is c - 1 -> 51
-    # print(SB_RANK)
-    Sw = compute_Sw(class_scatters)
-    SW_RANK = np.linalg.matrix_rank(Sw)       # Rank is N - c -> 312(train_imgs) - 52 = 260 (same as PCA reduction)
-    # print(SW_RANK)
-    reference_LDA_coeffs, fisherfaces = compute_LDA_Fisherfaces(Sw, Sb, Wpca, training_data)
-    # CHECKED THIS FAR
+    M_PCAs = []
+    accuracies = []
 
-    # fish_images = goto_original_domain(fisherfaces, Wpca)
-    # display_eigenvectors(fish_images)
+    while M_PCA_reduction > -312:
 
-    # ''' Start classification procedure'''
-    candidate_LDA_coeffs = find_fisher_coeffs(testing_data, Wpca, fisherfaces)
-    classification = classify(reference_LDA_coeffs, candidate_LDA_coeffs)
+        [training_data, testing_data], means = import_processing(INPUT_PATH)
+        Wpca = reduce_by_PCA(training_data, means)
+        class_means = compute_class_means(training_data)
+        class_scatters = compute_class_scatters(training_data, class_means)
+        Sb = compute_Sb(class_means)
+        SB_RANK =  np.linalg.matrix_rank(Sb)      # Rank is c - 1 -> 51
+        # print(SB_RANK)
+        Sw = compute_Sw(class_scatters)
+        SW_RANK = np.linalg.matrix_rank(Sw)       # Rank is N - c -> 312(train_imgs) - 52 = 260 (same as PCA reduction)
+        # print(SW_RANK)
+        reference_LDA_coeffs, fisherfaces = compute_LDA_Fisherfaces(Sw, Sb, Wpca, training_data)
+        # CHECKED THIS FAR
 
-    ground_truth = create_ground_truth()
+        # fish_images = goto_original_domain(fisherfaces, Wpca)
+        # display_eigenvectors(fish_images)
 
-    bool_array, accuracy = bool_and_accuracy(ground_truth, classification)
+        # ''' Start classification procedure'''
+        candidate_LDA_coeffs = find_fisher_coeffs(testing_data, Wpca, fisherfaces)
+        classification = classify(reference_LDA_coeffs, candidate_LDA_coeffs)
 
-    print(accuracy)
-    # save_dict = {'accuracy': accuracy, 'training_split': TRAINING_SPLIT, 'M_PCA': M_PCA, 'M_LDA': M_LDA,
-    #              'Sb_rank': SB_RANK, 'Sw_rank': SW_RANK}
-    # save_name = 'split_{}m_pca{}m_lda{}'.format(TRAINING_SPLIT, M_PCA, M_LDA)
-    # save_values(save_dict, name=save_name)
+        ground_truth = create_ground_truth()
 
+        bool_array, accuracy = bool_and_accuracy(ground_truth, classification)
+
+        print(accuracy)
+
+        accuracies.append(accuracy)
+        M_PCAs.append(M_PCA)
+        save_dict = {'accuracy': accuracies, 'training_split': TRAINING_SPLIT, 'M_PCA': M_PCAs, 'M_LDA': M_LDA,
+                     'Sb_rank': SB_RANK, 'Sw_rank': SW_RANK}
+        save_name = 'split_{}m_lda{}VARY_M_PCA'.format(TRAINING_SPLIT, M_LDA)
+        save_values(save_dict, name=save_name)
+
+        M_PCA_reduction -= 15
