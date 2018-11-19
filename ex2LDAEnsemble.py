@@ -11,7 +11,7 @@ from in_out import display_eigenvectors, save_values
 
 DEFAULT_WLDA = np.zeros((2576, 1))
 INPUT_PATH = 'data/face.mat'
-parameters = {'split': 7, 'n_units': 8, 'M_PCA': False, 'M_LDA': False, 'bag_size': 400, 'combination': 'product', 'PCA_reduction': 0, 'LDA_reduction': 0}
+parameters = {'split': 7, 'n_units': 8, 'M_PCA': True, 'M_LDA': True, 'bag_size': 400, 'combination': 'product', 'PCA_reduction': 0, 'LDA_reduction': 0}
 # A true value for MLDA and MPCA randomizes their values to be between 1/4 and 4/4 of their original value
 # The combination defines how the units' outputs are combined. For now, only mean is implemented but product needs to
 # be implemented
@@ -442,8 +442,8 @@ def create_ground_truth():
 
 if __name__ == '__main__':
 
-    varying_parameter = 'PCA_reduction'
-    parameter_values = np.arange(0, -312, -20)
+    varying_parameter = 'n_units'
+    parameter_values = np.array([8])
 
     training_times = np.zeros_like(parameter_values).astype(np.float32)
     testing_times = np.zeros_like(parameter_values).astype(np.float32)
@@ -492,7 +492,7 @@ if __name__ == '__main__':
                        'testing_times': testing_times, 'repeats_in_bag':  repeats, 'M_LDA': M_LDAs, 'M_PCA': M_PCAs,
                        'bag size': bag_size, 'corrs': np.array(cor_mats)}
         # save_values(merged_dict, 'acc_time_varying_' + varying_parameter + parameters['combination'])
-        save_values(merged_dict, 'acc_time_no_bag_' + varying_parameter + parameters['combination'])
+        save_values(merged_dict, 'acc_time_no_bag_' + 'Vary_unit_params' + parameters['combination'])
 
 
 
