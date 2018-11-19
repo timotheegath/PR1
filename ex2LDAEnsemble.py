@@ -440,8 +440,8 @@ def create_ground_truth():
 
 if __name__ == '__main__':
 
-    varying_parameter = 'PCA_reduction'
-    parameter_values = np.arange(0, -312, -10)
+    varying_parameter = 'LDA_reduction'
+    parameter_values = np.arange(0, -51, -5)
     training_times = np.zeros_like(parameter_values).astype(np.float32)
     testing_times = np.zeros_like(parameter_values).astype(np.float32)
     accuracies = np.zeros_like(parameter_values).astype(np.float32)
@@ -449,6 +449,7 @@ if __name__ == '__main__':
     M_LDAs = np.zeros((parameter_values.shape[0], parameters['n_units']))
     M_PCAs = np.zeros((parameter_values.shape[0], parameters['n_units']))
     bag_size = np.zeros((parameter_values.shape[0], parameters['n_units']))
+    cor_mats = []
 
     for nn in range(parameter_values.shape[0]):
         [training_data, testing_data], means = import_processing(INPUT_PATH)  # Training and Testing data have the
@@ -464,6 +465,7 @@ if __name__ == '__main__':
 
         t0 = time.time()
         classification = ensemble.classify(testing_data)
+        cor_mats.append(ensemble.units_correlation())
         final_class = np.argmax(classification, axis=0)
         t_class = time.time()
 
@@ -484,7 +486,8 @@ if __name__ == '__main__':
         print('Accuracy :', accuracies[nn])
         # ensemble.save()
         merged_dict = {varying_parameter: parameter_values, 'accuracy': accuracies, 'training_times': training_times,
-                       'testing_times': testing_times, 'repeats_in_bag':  repeats, 'M_LDA': M_LDAs, 'M_PCA': M_PCAs, 'bag size': bag_size}
+                       'testing_times': testing_times, 'repeats_in_bag':  repeats, 'M_LDA': M_LDAs, 'M_PCA': M_PCAs,
+                       'bag size': bag_size, 'corrs': np.array(cor_mats)}
         save_values(merged_dict, 'acc_time_varying_' + varying_parameter + parameters['combination'])
 
 
