@@ -44,9 +44,11 @@ def plot_confusion_matrix(cm, classes,
     plt.title(title)
     plt.colorbar()
     tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
+    ix = np.arange(0, len(classes), 4)
 
+    plt.yticks(tick_marks, classes)
+    classes[ix] = []
+    plt.xticks(tick_marks, classes, rotation=45)
     fmt = '.2f' if normalize else 'd'
     thresh = cm.max() / 2.
     # for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
