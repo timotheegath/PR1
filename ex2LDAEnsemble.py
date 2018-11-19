@@ -345,8 +345,8 @@ class Dataset():
 
         while(do_again):
 
-            chosen_sample_indexes = np.random.randint(0, self.N, (n,))
-
+            # chosen_sample_indexes = np.random.randint(0, self.N, (n,))
+            chosen_sample_indexes = np.arange(0, self.N)
             unique, counts = np.unique(chosen_sample_indexes, return_counts=True)
             doubles = 0
             for c in counts:
@@ -490,7 +490,8 @@ if __name__ == '__main__':
         merged_dict = {varying_parameter: parameter_values, 'accuracy': accuracies, 'training_times': training_times,
                        'testing_times': testing_times, 'repeats_in_bag':  repeats, 'M_LDA': M_LDAs, 'M_PCA': M_PCAs,
                        'bag size': bag_size, 'corrs': np.array(cor_mats)}
-        save_values(merged_dict, 'acc_time_varying_' + varying_parameter + parameters['combination'])
+        # save_values(merged_dict, 'acc_time_varying_' + varying_parameter + parameters['combination'])
+        save_values(merged_dict, 'acc_time_no_bag_' + varying_parameter + parameters['combination'])
 
 
 
