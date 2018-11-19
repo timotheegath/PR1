@@ -103,8 +103,14 @@ Table \ref{tab:NNvsRec} shows the
 \subsection{PCA-LDA}
 The data was split the same way for PCA-LDA algorithm training, with 70\% used for training and the rest for testing.
 
-Figure \ref{fig:} shows the results of the experiment where the number of retained fisher-faces ($M_{lda}$) is gradually decreased, and the dimension of the PCA subspace is kept as N-c. We can see that the accuracy worsens as the $M_{lda}$ decreases.
+\subsection{Recognition accuracy}
+Figure \ref{fig:} shows the results of the experiment where the number of retained fisher-faces ($M_{lda}$) is gradually decreased, and the dimension of the PCA subspace ($M_{pca}$) is kept as N-c. We can see that the recognition accuracy worsens as the $M_{lda}$ decreases.
 
+In Figure \ref{fig:} we can see results of decreasing $M_{pca}$ while retaing all the fisherfaces ($c-1$).
+Our results show no particular trend in decreased classification accuracy. This supports the fact that we can learn much better features when applying supervised training with knowledge of classes, making the model more successful in sparse feature space.
+
+\subsection{Ranks of the scatter matrices}
+The scatter matrices are defined as sums of outer vector products. We confirm that the rank of the within-class-scatter matrix (Sw) is N-c. As the matrix obtained by vector outer product can have at most rank 1, and these outer products are summed for each class, the rank of the summed matrix would be Ni, where Ni is the number of vectors per class. 
 
 \subsection{PCA-LDA Ensemble}
 
@@ -113,6 +119,13 @@ Our model consisted of a number $T$ of sub-models made of one PCA unit and one f
 \subsubsection{Bagging}
 
 The training data was randomised and split identically to Exercise 1. However, once the training data had been obtained, it was sampled into $T$ bags, by selecting a data point uniformly from the training dataset, with replacement. This bagging technique contributed to the randomness of each unit and thus their decorrelation.
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\linewidth]{../results/ex2LDAEnsemble/acc_vs_bag_size.png}
+    \caption{The bag size was varied for all units simultaneously. The fusion rule was a product, T=8}
+    \label{fig:acc_vs_bag}
+\end{figure}
+A bag size of $T = 400$ was chosen as a default value for the remaining experiments.
 
 
 %\bibliography{IEEEabrv,./refs}
