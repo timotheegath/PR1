@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.io
 import time
+from sklearn.metrics import confusion_matrix
 from scipy.io import loadmat, savemat
 from scipy import spatial
 from sklearn.preprocessing import normalize
@@ -11,7 +12,7 @@ from in_out import display_eigenvectors, save_values
 
 DEFAULT_WLDA = np.zeros((2576, 1))
 INPUT_PATH = 'data/face.mat'
-parameters = {'split': 7, 'n_units': 8, 'M_PCA': True, 'M_LDA': True, 'bag_size': 400, 'combination': 'product', 'PCA_reduction': 0, 'LDA_reduction': 0}
+parameters = {'split': 7, 'n_units': 25, 'M_PCA': True, 'M_LDA': True, 'bag_size': 400, 'combination': 'maj', 'PCA_reduction': 0, 'LDA_reduction': 0}
 # A true value for MLDA and MPCA randomizes their values to be between 1/4 and 4/4 of their original value
 # The combination defines how the units' outputs are combined. For now, only mean is implemented but product needs to
 # be implemented
@@ -20,7 +21,40 @@ TRAINING_SPLIT = parameters['split']
 NUMBER_PEOPLE = 52
 
 T_TRAINING = 0
+def plot_confusion_matrix(cm, classes,
+                          normalize=False,
+                          title='Confusion matrix',
+                          cmap=plt.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    """
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
 
+    print(cm)
+
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+
+    plt.yticks(tick_marks, classes)
+    plt.xticks(tick_marks[0::5], classes[0::5], rotation=0)
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    # for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+    #     plt.text(j, i, format(cm[i, j], fmt),
+    #              horizontalalignment="center",
+    #              color="white" if cm[i, j] > thresh else "black")
+
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+    plt.tight_layout()
+    plt.show()
 
 
 def count_non_zero(eigenvalues):
@@ -89,7 +123,9 @@ class Ensemble():
     def __init__(self, training_data, **kwargs):
         global T_TRAINING
         T_TRAINING = 0
-        self.n = n = parameters['n_units']
+        self.n =  parameters['n_units']
+        n = self.n
+        print(n)
         self.units = []
         bag_size = parameters['bag_size']
         if kwargs.get('load', False):
@@ -120,15 +156,34 @@ class Ensemble():
 
         if parameters['combination'] is 'mean':
 
-            p_distrib = np.mean(p_distrib, axis=0)
+            p_distrib = 1 - np.mean(p_distrib, axis=0)
+            p_distrib /= np.sum(p_distrib, axis=0, keepdims=True)
+            final_class = np.argmax(p_distrib, axis=0)
+
+            return final_class
 
         elif parameters['combination'] is 'product':
 
-            p_distrib = np.prod(p_distrib, axis=0)
+            p_distrib = 1 - np.prod(p_distrib, axis=0)
+            p_distrib /= np.sum(p_distrib, axis=0, keepdims=True)
+            final_class = np.argmax(p_distrib, axis=0)
 
-        p_distrib /= np.sum(p_distrib, axis=0, keepdims=True)
+            return final_class
 
-        return 1 - p_distrib
+        elif parameters['combination'] is 'maj':
+
+            votes = np.argmax(1 - p_distrib, axis=1)
+            classes, counts = np.unique(votes, return_counts=True, axis=0)
+            print(classes.shape)
+            winning_index = np.argmax(counts, axis=0)
+            winning_class = classes[winning_index]
+
+            return winning_class
+
+
+
+
+
 
     def save(self):
         Wpcas = np.zeros((self.n,) + self.units[0].PCA_unit.Wpca.shape, np.complex64)
@@ -192,7 +247,7 @@ class PCA_unit():
             eig_vec = retrieve_low_eigvecs(eig_vec, training_data_norm)
             M_PCA = training_data_norm.shape[1] - NUMBER_PEOPLE + parameters['PCA_reduction']
             if parameters['M_PCA']:
-                M_PCA -= np.random.randint(int(-3*M_PCA/4), 0)# hyperparameter Mpca <= N-c
+                M_PCA = np.random.randint(int(M_PCA/4), M_PCA)# hyperparameter Mpca <= N-c
             print('M_PCA: ', M_PCA)
             eig_vec_reduced = eig_vec[:, :M_PCA]
             return eig_vec_reduced, M_PCA
@@ -270,7 +325,7 @@ class LDA_unit():
         eig_vals = np.real(eig_vals)
         self.M_LDA = NUMBER_PEOPLE-1 + parameters['LDA_reduction']  # hyperparameter Mlda <= c-1 -> there should be 51 non_zero
         if parameters['M_LDA']:
-            self.M_LDA -= np.random.randint(int(-3*self.M_LDA/4), 0)
+            self.M_LDA = np.random.randint(int(self.M_LDA/4), self.M_LDA)
         print('M_LDA :', self.M_LDA)
 
         self.Wlda = fisherfaces[:, :self.M_LDA]
@@ -345,8 +400,8 @@ class Dataset():
 
         while(do_again):
 
-            # chosen_sample_indexes = np.random.randint(0, self.N, (n,))
-            chosen_sample_indexes = np.arange(0, self.N)
+            chosen_sample_indexes = np.random.randint(0, self.N, (n,))
+            # chosen_sample_indexes = np.arange(0, self.N)
             unique, counts = np.unique(chosen_sample_indexes, return_counts=True)
             doubles = 0
             for c in counts:
@@ -439,8 +494,8 @@ def create_ground_truth():
 
 if __name__ == '__main__':
 
-    varying_parameter = 'n_units'
-    parameter_values = np.array([8])
+    varying_parameter = 'bag_size'
+    parameter_values = np.array([400])
 
     training_times = np.zeros_like(parameter_values).astype(np.float32)
     testing_times = np.zeros_like(parameter_values).astype(np.float32)
@@ -464,11 +519,12 @@ if __name__ == '__main__':
         t_train = T_TRAINING
 
         t0 = time.time()
-        classification = ensemble.classify(testing_data)
+        final_class = ensemble.classify(testing_data)
         cor_mats.append(ensemble.units_correlation())
-        final_class = np.argmax(classification, axis=0)
-        t_class = time.time()
 
+        t_class = time.time()
+        conf_matrix = confusion_matrix(g_t, final_class)
+        plot_confusion_matrix(conf_matrix, np.arange(0, NUMBER_PEOPLE), True)
         training_times[nn], testing_times[nn] = t_train, t_class-t0
 
         def bool_and_accuracy(ground_truth, prediction):
@@ -487,9 +543,9 @@ if __name__ == '__main__':
         # ensemble.save()
         merged_dict = {varying_parameter: parameter_values, 'accuracy': accuracies, 'training_times': training_times,
                        'testing_times': testing_times, 'repeats_in_bag':  repeats, 'M_LDA': M_LDAs, 'M_PCA': M_PCAs,
-                       'bag size': bag_size, 'corrs': np.array(cor_mats)}
+                       'bag_size': bag_size, 'corrs': np.array(cor_mats)}
         # save_values(merged_dict, 'acc_time_varying_' + varying_parameter + parameters['combination'])
-        save_values(merged_dict, 'acc_time_no_bag_' + 'Vary_unit_params' + parameters['combination'])
+        save_values(merged_dict, 'acc_time_25_units_' + 'Vary_unit_params' + parameters['combination'])
 
 
 
