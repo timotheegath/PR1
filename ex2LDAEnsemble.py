@@ -13,7 +13,7 @@ from in_out import display_eigenvectors, save_values
 DEFAULT_WLDA = np.zeros((2576, 1))
 INPUT_PATH = 'data/face.mat'
 
-parameters = {'split': 7, 'n_units': 8, 'M_PCA': False, 'M_LDA': False, 'bag_size': 400, 'combination': 'maj', 'PCA_reduction': 0, 'LDA_reduction': 0}
+parameters = {'split': 7, 'n_units': 8, 'M_PCA': True, 'M_LDA': True, 'bag_size': 400, 'combination': 'maj', 'PCA_reduction': 0, 'LDA_reduction': 0}
 
 # A true value for MLDA and MPCA randomizes their values to be between 1/4 and 4/4 of their original value
 # The combination defines how the units' outputs are combined. For now, only mean is implemented but product needs to
