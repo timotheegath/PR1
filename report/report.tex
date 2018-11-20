@@ -95,7 +95,8 @@ This shows qualitatively in Figure \ref{fig:reconstr_faces}: the faces get relia
 Here we compare the performance of our model with two different classification methods. The Near Neighbour (NN) classification assigns the class of the nearest reference coefficient for each test image projected onto the PCA subspace. In classification by reconstruction, we first learn a different PCA subspace for each class (trained on images belonging to the class) and then project the test image onto each classes subspace. We then obtain 52 reconstructed images using the coefficients obtained from each class and finally assign the class with minimum reconstruction error when compared to the test image.
 Table \ref{tab:NNvsRec} shows the difference between the two classification methods in terms of accuracy, classification time and memory usage.
 Figures 7-10 show example success and failure cases for both methods of classification. Figures 11 and 12 show the confusion matrices for NN classification and classification by reconstruction respectively.
-Both confusion matrices show a tendency to miss-classify the test images as particular classes. These particular classes(persons) seem to share similar features to many others. In this case the reconstruction method appears to perform worse. By learning a different subspace for each class, classes that share similar features (eigenfaces) produce similar coefficients and reconstruction errors, where these coefficients are weighted and summed (reinforcing class similarity). Conversely, the NN classification assigns nearest reference coefficient's class, regardless of the distance to other coefficients belonging to the class, and this seems to perform better when coefficients of two classes reside in close proximity to each other in the PCA subspace.
+For the NN classifier, the accuracy vs eigenfaces measure is shown in Figure \ref{fig:how_many_faces}. We can see the accuracy is highly dependant on the eigenfaces with the largest eigenvalues. In the case of the reconstruction method (Figure\ref{fig:REC_acc_vs_vecs}) we see the accuracy is not very dependant on the number of retained eigenfaces, since the sub-spaces are trained on a very low number of sample images per class the ability to discriminate is highly dependant on the differences between the classes.
+Both confusion matrices show a tendency to miss-classify the test images as particular classes. These particular classes (persons) seem to share similar features to many others. In this case the reconstruction method appears to perform worse. By learning a different subspace for each class, classes that share similar features (eigenfaces) produce similar coefficients and reconstruction errors, where these coefficients are weighted and summed (reinforcing class similarity). Conversely, the NN classification assigns nearest reference coefficient's class, regardless of the distance to other coefficients belonging to the class, and this seems to perform better when coefficients of two classes reside in close proximity to each other in the PCA subspace.
 
 \begin{table}[]
     \centering
@@ -111,7 +112,12 @@ Both confusion matrices show a tendency to miss-classify the test images as part
 \end{table}
 
 
-
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=\linewidth]{../results/1bb/acc_vs_vecs_REC.png}
+    \caption{Classification by reconstruction accuracy varying with number of eigenfaces in each class subspace}
+    \label{fig:REC_acc_vs_vecs}
+\end{figure}
 \begin{figure}[htb!]
     \centering
     \includegraphics[width=\linewidth]{../results/1bb/confusion_NN.png}
@@ -182,19 +188,7 @@ Looking at the confusion matrix, it appears that there is larger miss-classifica
     \label{fig:M_LDA_conf_mat}
 \end{figure}
 
-\begin{figure}[htb!]
-    \centering
-    \includegraphics[width = \linewidth]{../results/ex2LDA/LDA_Example_Successes_crop.png}
-    \caption{Example success cases}
-    \label{fig:MLDA_success}
-\end{figure}
 
-\begin{figure}[htb!]
-    \centering
-    \includegraphics[width = \linewidth]{../results/ex2LDA/LDA_Example_Failiures.png}
-    \caption{Fail cases}
-    \label{fig:MLDA_fail}
-\end{figure}
 
 \subsection{PCA-LDA Ensemble}
 
@@ -280,19 +274,19 @@ The performance of the different fusion rules was tested and plotted in Figure \
 \end{figure}
 
 \subsubsection{Influence of number of units}
-The effect of varying the number of units in the ensemble is shown in Figure \ref{fig:acc_vs_n_units} and \ref{fig:acc_vs_n_units_rand}. We can see that while increasing the number of units always has a positive impact on the classification performance with no randomisation, randomising the parameters makes the ensemble converge to an efficient point faster, with a lower number of units required. 
+The effect of varying the number of units in the ensemble is shown in Figure \ref{fig:acc_vs_n_units} and \ref{fig:acc_vs_n_units_rand}. We can see that while increasing the number of units always has a positive impact on the classification performance with no randomisation, randomising the parameters makes the ensemble converge to an efficient point faster, with a lower number of units required. Moreover, there is no significant evolution between all fusion methods.
 
 \begin{figure}
 
     \centering
     \includegraphics[width=\linewidth]{../results/ex2LDAEnsemble/acc_vs_n_unit.png}
-    \caption{Accuracy of classification against number of units used. ($n_t = 400$, no parameter randomisation }
+    \caption{Accuracy of classification against number of units used. ($n_t = 400$, no parameter randomisation)}
     \label{fig:acc_vs_n_units}
 \end{figure}
 \begin{figure}
     \centering
     \includegraphics[width=\linewidth]{../results/ex2LDAEnsemble/acc_vs_n_unit_rand.png}
-    \caption{Accuracy of classification against number of units used. ($n_t = 400$, with parameter randomisation }
+    \caption{Accuracy of classification against number of units used. ($n_t = 400$, with parameter randomisation) }
     \label{fig:acc_vs_n_units_rand}
 \end{figure}
 
@@ -326,3 +320,16 @@ The effect of varying the number of units in the ensemble is shown in Figure \re
     \label{fig:rec_successes}
 \end{figure}
 \end{document}
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width = \linewidth]{../results/ex2LDA/LDA_Example_Successes_crop.png}
+    \caption{Example success cases}
+    \label{fig:MLDA_success}
+\end{figure}
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width = \linewidth]{../results/ex2LDA/LDA_Example_Failiures.png}
+    \caption{Fail cases}
+    \label{fig:MLDA_fail}
+\end{figure}
