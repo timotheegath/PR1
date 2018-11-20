@@ -17,7 +17,7 @@ The abstract
 \subsubsection{Part a)}
 The faces dataset consisted of 10 pictures for each of the 52 different individuals. Hence, it was decided to split the data into 7 pictures per individual for training and 3 pictures per individual for testing, resulting in a total of 364 training images. This allowed to train the PCA algorithm on all available classes and run meaningful tests on all images. Moreover, the order of pictures per individual was randomised before to remove any possible correlation between the complexity/characteristics of the pictures and their order, hinted by previous experiments. We found that with the added random component, overall, the classification accuracy improved from the initial experiments where first 7  pictures per individual were taken as the training set.
 
-Standard PCA was performed and the eigenfaces in Figure \ref{fig:eigfaces1} were found, along with the eigenvalues in Figure \ref{fig:eigvals1}. The data was normalised by subtracting the mean face shown in Figure \ref{fig:mean_im1}. In order to identify relevant principal components, the eigenvalues of the covariance matrix with a real part lower than 0.1 were discarded (the number was chosen by inspection). 363 ($N - 1$) eigenfaces and eigenvalues remained after this thresholding operation, meaning that 363 eigenfaces were relevant to optimally reduce the dimensionality of the data. Notably, for $N$ training samples, the number of relevant eigenvalues was found to be $N - 1$. This is expected, since the largest vector subspace that can be defined with N points is R(N-1).
+Standard PCA was performed and the eigenfaces in Figure \ref{fig:eigfaces1} were found, along with the eigenvalues in Figure \ref{fig:eigvals1}. The data was normalised by subtracting the mean face shown in Figure \ref{fig:mean_im1}. In order to identify relevant principal components, the eigenvalues of the covariance matrix with a real part lower than 0.1 were discarded (the number was chosen by inspection). 363 ($N - 1$) eigenfaces and eigenvalues remained after this thresholding operation, meaning that 363 eigenfaces were relevant to optimally reduce the dimensionality of the data. Notably, for $N$ training samples, the number of relevant eigenvalues was found to be $N - 1$. This is expected, since the largest vector subspace that can be defined with N points is $R^{N-1}$.
 % How do you choose how many eigenvectors you'll actually keep ?
 
 
@@ -150,7 +150,7 @@ Looking at the confusion matrix, it appears that there is larger miss-classifica
 
 \subsection{PCA-LDA Ensemble}
 
-Our model consisted of a number $T$ of sub-models made of one PCA unit,one following LDA unit and a nearest-neighbour classifier (NN). In each unit $t$, the PCA unit reduced the dimensionality of its input by applying the transform $W_{PCA}^t$, made of $M_{PCA}^t$ eigenfaces. The reduced data was then transformed by $W_{LDA}^t$, made of $M_{LDA}^t$ fisherfaces. The NN algorithm then assigns the resulting fisherfaces to their nearest neighbour. Each unit was trained sequentially, and their individual training data was used to reduce the training data and find the class-wise reference fisherfaces ($F_{c_i} \in \mathbb{R}^{D X W_{c_i}}$, where $W_c_i$ denotes the number of examples for the class $C_i$ in the training set).  By default, $M_{PCA}^t = N - c$ and $M_{LDA}^t = c - 1$. For each unit,  the cosine distance between the fisherfaces of the testing data and each of the vectors making up $F_{c_i}$ was calculated. Within a class, only the minimal distance was kept. All distances were then normalized and inverted, getting the probability distribution $p(x \in c_i)$ . The fusion of the unit outputs was chosen between 'mean', where the mean of the probability distribution between all units was taken and the minimal distance class was chosen, 'product', where instead of mean the product was taken, and 'majority', where each unit votes for there minimal distance class, and the class with the highest number of votes throughout the ensemble wins.
+Our model consisted of a number $T$ of sub-models made of one PCA unit,one following LDA unit and a nearest-neighbour classifier (NN). In each unit $t$, the PCA unit reduced the dimensionality of its input by applying the transform $W_{PCA}^t$, made of $M_{PCA}^t$ eigenfaces. The reduced data was then transformed by $W_{LDA}^t$, made of $M_{LDA}^t$ fisherfaces. The NN algorithm then assigns the resulting fisherfaces to their nearest neighbour. Each unit was trained sequentially, and their individual training data was used to reduce the training data and find the class-wise reference fisherfaces ($F_{c_i} \in \mathbb{R}^{D X W_{c_i}}$, where $W_{c_i}$ denotes the number of examples for the class $C_i$ in the training set).  By default, $M_{PCA}^t = N - c$ and $M_{LDA}^t = c - 1$. For each unit,  the cosine distance between the fisherfaces of the testing data and each of the vectors making up $F_{c_i}$ was calculated. Within a class, only the minimal distance was kept. All distances were then normalized and inverted, getting the probability distribution $p(x \in c_i)$ . The fusion of the unit outputs was chosen between 'mean', where the mean of the probability distribution between all units was taken and the minimal distance class was chosen, 'product', where instead of mean the product was taken, and 'majority', where each unit votes for there minimal distance class, and the class with the highest number of votes throughout the ensemble wins.
 
 \subsubsection{Bagging}
 
@@ -200,13 +200,21 @@ We generated three different models, using the default parameters ($T = 8, n_t =
 
 \begin{figure}
     \centering
-    \begin{subfigure}
+    \begin{subfigure}[b]{0.3\textwidth}
+        \includegraphics[width=\textwidth]{../results/ex2LDAEnsemble/conf_matrix_rand_mean.png}
+        \caption{Mean fusion, default parameters}
+    \end{subfigure}    
+    \begin{subfigure}[b]{0.3\textwidth}
+        \includegraphics[width=\textwidth]{../results/ex2LDAEnsemble/conf_matrix_rand.png}
+        \caption{Product fusion, default parameters}
+    \end{subfigure}  
+    \begin{subfigure}[b]{0.3\textwidth}
+        \includegraphics[width=\textwidth]{../results/ex2LDAEnsemble/all_rand_maj_conf.png}
+        \caption{Majority voting fusion, default parameters}
+    \end{subfigure}    
+    \label{fig:conf_matrix_ensemble}
     
-        \includegraphics{../results/ex2LDAEnsemble/}
-        \caption{Caption}
-        \label{fig:my_label}
     
-    \end{subfigure}
 \end{figure}
 
 
