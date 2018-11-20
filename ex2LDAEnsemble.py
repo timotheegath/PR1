@@ -13,7 +13,7 @@ from in_out import display_eigenvectors, save_values
 DEFAULT_WLDA = np.zeros((2576, 1))
 INPUT_PATH = 'data/face.mat'
 
-parameters = {'split': 7, 'n_units': 8, 'M_PCA': False, 'M_LDA': False, 'bag_size': 400, 'combination': 'product', 'PCA_reduction': 0, 'LDA_reduction': 0}
+parameters = {'split': 7, 'n_units': 8, 'M_PCA': False, 'M_LDA': False, 'bag_size': 400, 'combination': 'maj', 'PCA_reduction': 0, 'LDA_reduction': 0}
 
 # A true value for MLDA and MPCA randomizes their values to be between 1/4 and 4/4 of their original value
 # The combination defines how the units' outputs are combined. For now, only mean is implemented but product needs to
@@ -513,11 +513,11 @@ if __name__ == '__main__':
 
     varying_parameter = 'n_units'
 
-    parameter_values = np.array([8, 8, 8])
+    parameter_values = np.array([2, 6, 10, 14, 18])
 
     training_times = np.zeros_like(parameter_values).astype(np.float32)
     testing_times = np.zeros_like(parameter_values).astype(np.float32)
-    accuracies = np.zeros((parameter_values.shape[0], 3)).astype(np.float32)
+    accuracies = np.zeros((parameter_values.shape[0], 1)).astype(np.float32)
     repeats = []
     M_LDAs = []
     M_PCAs = []
@@ -525,7 +525,7 @@ if __name__ == '__main__':
     cor_mats = []
     conf_mats = []
     unit_acc = []
-    CHANGE_FUSION = True
+    CHANGE_FUSION = False
     for nn in range(parameter_values.shape[0]):
         [training_data, testing_data], means = import_processing(INPUT_PATH)  # Training and Testing data have the
         # training mean removed
@@ -548,6 +548,13 @@ if __name__ == '__main__':
                 conf_matrix = confusion_matrix(g_t, final_class)
                 conf_mats.append(conf_matrix)
                 # plot_confusion_matrix(conf_matrix, np.arange(0, NUMBER_PEOPLE), True)
+        else:
+            final_class, unit_guess = ensemble.classify(testing_data)
+            _, acc, unit_accuracy = bool_and_accuracy(g_t, final_class, unit_guess)
+            accuracies[nn, 0] = acc
+            conf_matrix = confusion_matrix(g_t, final_class)
+            conf_mats.append(conf_matrix)
+
         unit_acc.append(unit_accuracy)
         cor_mats.append(ensemble.units_correlation())
 
@@ -570,9 +577,9 @@ if __name__ == '__main__':
         #                'testing_times': testing_times, 'repeats_in_bag':  repeats, 'M_LDA': M_LDAs, 'M_PCA': M_PCAs,
         #                'bag_size': bag_size, 'corrs': cor_mats, 'conf_mats': np.array(conf_mats)}
         merged_dict = {varying_parameter: parameter_values, 'accuracy': accuracies, 'training_times': training_times,
-                       'testing_times': testing_times, 'unit_accuracy': np.array(unit_acc), 'conf_mats': np.array(conf_mats)}
+                       'testing_times': testing_times, 'conf_mats': np.array(conf_mats)}
         # save_values(merged_dict, 'acc_time_varying_' + varying_parameter + parameters['combination'])
-        save_values(merged_dict, 'acc_time_' + 'unit_error_analysis_no_rand')
+        save_values(merged_dict, 'acc_time_' + 'n_units_maj')
 
 
 
