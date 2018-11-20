@@ -17,7 +17,7 @@ The abstract
 \subsubsection{Part a)}
 The faces dataset consisted of 10 pictures for each of the 52 different individuals. Hence, it was decided to split the data into 7 pictures per individual for training and 3 pictures per individual for testing, resulting in a total of 364 training images. This allowed to train the PCA algorithm on all available classes and run meaningful tests on all images. Moreover, the order of pictures per individual was randomised before to remove any possible correlation between the complexity/characteristics of the pictures and their order, hinted by previous experiments. We found that with the added random component, overall, the classification accuracy improved from the initial experiments where first 7  pictures per individual were taken as the training set.
 
-Standard PCA was performed and the eigenfaces in Figure \ref{fig:eigfaces1} were found, along with the eigenvalues in Figure \ref{fig:eigvals1}. The data was normalised by subtracting the mean face shown in Figure \ref{fig:mean_im1}. In order to identify relevant principal components, the eigenvalues of the covariance matrix with a real part lower than 0.1 were discarded (the number was chosen by inspection). $N - 1$(363) eigenfaces and eigenvalues remained after this thresholding operation, meaning that 363 eigenfaces were relevant to optimally reduce the dimensionality of the data. Notably, for $N$ training samples, the number of relevant eigenvalues was found to be $N - 1$. This is expected, since the largest vector subspace that can be defined with N points is R(N-1).
+Standard PCA was performed and the eigenfaces in Figure \ref{fig:eigfaces1} were found, along with the eigenvalues in Figure \ref{fig:eigvals1}. The data was normalised by subtracting the mean face shown in Figure \ref{fig:mean_im1}. In order to identify relevant principal components, the eigenvalues of the covariance matrix with a real part lower than 0.1 were discarded (the number was chosen by inspection). 363 ($N - 1$) eigenfaces and eigenvalues remained after this thresholding operation, meaning that 363 eigenfaces were relevant to optimally reduce the dimensionality of the data. Notably, for $N$ training samples, the number of relevant eigenvalues was found to be $N - 1$. This is expected, since the largest vector subspace that can be defined with N points is R(N-1).
 % How do you choose how many eigenvectors you'll actually keep ?
 
 
@@ -198,7 +198,16 @@ We generated three different models, using the default parameters ($T = 8, n_t =
 
 \subsubsection{Confusion and classification performance}
 
-
+\begin{figure}
+    \centering
+    \begin{subfigure}
+    
+        \includegraphics{../results/ex2LDAEnsemble/}
+        \caption{Caption}
+        \label{fig:my_label}
+    
+    \end{subfigure}
+\end{figure}
 
 
 %\bibliography{IEEEabrv,./refs}
