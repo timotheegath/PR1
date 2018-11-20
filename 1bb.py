@@ -158,7 +158,7 @@ if __name__ == '__main__':
         NN_accuracy.append(acc)
         conf_matrix = confusion_matrix(true_faces, recognised_faces)
         if DISPLAY:
-            # plot_confusion_matrix(conf_matrix, classes=np.arange(0, NUMBER_PEOPLE), normalize=True)
+            plot_confusion_matrix(conf_matrix, classes=np.arange(0, NUMBER_PEOPLE), normalize=True)
             failures = identify_failure(bool_recognised)
 
             display_eigenvectors(testing_data[:, failures] + glob_mean[:, None], eig=False)
@@ -191,7 +191,7 @@ if __name__ == '__main__':
         print('Accuracy of', acc)
         # name = 'results_' + 'rec'
         if DISPLAY:
-            # plot_confusion_matrix(conf_matrix, classes=np.arange(0, NUMBER_PEOPLE), normalize=True)
+            plot_confusion_matrix(conf_matrix, classes=np.arange(0, NUMBER_PEOPLE), normalize=True)
 
             failures = identify_failure(bool_recognised)
             # for i in range(NUMBER_PEOPLE):
