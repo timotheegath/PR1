@@ -12,7 +12,9 @@ from in_out import display_eigenvectors, save_values
 
 DEFAULT_WLDA = np.zeros((2576, 1))
 INPUT_PATH = 'data/face.mat'
+
 parameters = {'split': 7, 'n_units': 8, 'M_PCA': False, 'M_LDA': False, 'bag_size': 400, 'combination': 'product', 'PCA_reduction': 0, 'LDA_reduction': 0}
+
 # A true value for MLDA and MPCA randomizes their values to be between 1/4 and 4/4 of their original value
 # The combination defines how the units' outputs are combined. For now, only mean is implemented but product needs to
 # be implemented
@@ -510,6 +512,7 @@ if __name__ == '__main__':
         return correct, accuracy, unit_accuracy
 
     varying_parameter = 'n_units'
+
     parameter_values = np.array([8, 8, 8])
 
     training_times = np.zeros_like(parameter_values).astype(np.float32)
