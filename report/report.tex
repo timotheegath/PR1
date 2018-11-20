@@ -18,8 +18,14 @@ The faces dataset consisted of 10 pictures for each of the 52 different individu
 Standard PCA was performed and the eigenfaces in Figure \ref{fig:eigfaces1} were found, along with the eigenvalues in Figure \ref{fig:eigvals1}. The data was normalised by subtracting the mean face shown in Figure \ref{fig:mean_im1}. In order to identify relevant principal components, the eigenvalues of the covariance matrix with a real part lower than 0.1 were discarded (the number was chosen by inspection). 363 ($N - 1$) eigenfaces and eigenvalues remained after this thresholding operation, meaning that 363 eigenfaces were relevant to optimally reduce the dimensionality of the data. Notably, for $N$ training samples, the number of relevant eigenvalues was found to be $N - 1$. This is expected, since the mean image is removed, the largest vector subspace that can be defined with N points is $R^{N-1}$.
 % How do you choose how many eigenvectors you'll actually keep ?
 The eigenfaces (eigenvectors) with larger eigenvalues represent the most varied features of the training images (or the projection directions with the largest data scatter). Hence, the eigenvectors with larger eigenvalues will be more important for NN classification.
-The plot of accuracy vs the number of retained eigenfaces is shown in Figure \ref{fig:}. We can see the accuracy improves significantly at first and then less with addition of the less important eigenfaces, which is what we expect.
+The plot of accuracy vs the number of retained eigenfaces is shown in Figure \ref{fig:how_many_faces}. We can see the accuracy improves significantly at first and then less with addition of the less important eigenfaces, which is what we expect.
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=\linewidth]{../results/1bb/how_many_eigenfaces.png}
+    \caption{Classification accuracy by NN against number of eigenfaces. 52 eigenfaces give a satisfactory result}
+    \label{fig:how_many_faces}
 
+\end{figure}
 
 \begin{figure}[htb!]
     \centering
@@ -89,7 +95,7 @@ This shows qualitatively in Figure \ref{fig:reconstr_faces}: the faces get relia
 Here we compare the performance of our model with two different classification methods. The Near Neighbour (NN) classification assigns the class of the nearest reference coefficient for each test image projected onto the PCA subspace. In classification by reconstruction, we first learn a different PCA subspace for each class (trained on images belonging to the class) and then project the test image onto each classes subspace. We then obtain 52 reconstructed images using the coefficients obtained from each class and finally assign the class with minimum reconstruction error when compared to the test image.
 Table \ref{tab:NNvsRec} shows the difference between the two classification methods in terms of accuracy, classification time and memory usage.
 Figures 7-10 show example success and failure cases for both methods of classification. Figures 11 and 12 show the confusion matrices for NN classification and classification by reconstruction respectively.
-Both confusion matrices show a tendency to miss-classify the test images as particular classes. These particular classes(persons) seem to share similar features to many others. In this case the reconstruction method appears to perform worse. By learning a different subspace for each class, classes that share similar features (eigenfaces) produce similar coefficients and reconstruction errors, where these coefficients are weighted and summed (reinforcing class similarity). Conversely, the NN classification assigns nearest reference coefficient's class, regardless of the distance to other coefficients belonging to the class.
+Both confusion matrices show a tendency to miss-classify the test images as particular classes. These particular classes(persons) seem to share similar features to many others. In this case the reconstruction method appears to perform worse. By learning a different subspace for each class, classes that share similar features (eigenfaces) produce similar coefficients and reconstruction errors, where these coefficients are weighted and summed (reinforcing class similarity). Conversely, the NN classification assigns nearest reference coefficient's class, regardless of the distance to other coefficients belonging to the class, and this seems to perform better when coefficients of two classes reside in close proximity to each other in the PCA subspace.
 
 \begin{table}[]
     \centering
@@ -274,7 +280,7 @@ The performance of the different fusion rules was tested and plotted in Figure \
 \end{figure}
 
 \subsubsection{Influence of number of units}
-The effect of varying the number of units in the ensemble is shown in Figure \ref{fig:acc_vs_n_units}
+The effect of varying the number of units in the ensemble is shown in Figure \ref{fig:acc_vs_n_units} and \ref{fig:acc_vs_n_units_rand}. We can see that while increasing the number of units always has a positive impact on the classification performance with no randomisation, randomising the parameters makes the ensemble converge to an efficient point faster, with a lower number of units required. 
 
 \begin{figure}
 
@@ -284,7 +290,6 @@ The effect of varying the number of units in the ensemble is shown in Figure \re
     \label{fig:acc_vs_n_units}
 \end{figure}
 \begin{figure}
-
     \centering
     \includegraphics[width=\linewidth]{../results/ex2LDAEnsemble/acc_vs_n_unit_rand.png}
     \caption{Accuracy of classification against number of units used. ($n_t = 400$, with parameter randomisation }
