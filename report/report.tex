@@ -120,8 +120,29 @@ Table \ref{tab:NNvsRec} shows the difference between the two classification meth
 \begin{figure}
     \centering
     \includegraphics[width=\linewidth]{../results/1bb/REC_FAIL2.png}
-    \caption{Fail Cases}
-    \label{fig:nn_fails}
+    \caption{Classification by Reconstruction Fail Cases}
+    \label{fig:rec_fails}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{../results/1bb/REC_SUCCESS2.png}
+    \caption{Classification by Reconstruction Success Cases}
+    \label{fig:rec_successes}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{../results/1bb/confusion_NN.png}
+    \caption{NN Classification Confusion Matrix}
+    \label{fig:NN_conf_mat}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{../results/1bb/confusion_rec.png}
+    \caption{Classification by Reconstruction Confusion Matrix}
+    \label{fig:REC_conf_mat}
 \end{figure}
 
 \section{Question 2}
@@ -264,7 +285,7 @@ The effect of varying the number of units in the ensemble is shown in Figure \re
 \begin{figure}
     \centering
     \includegraphics{../results/ex2LDAEnsemble/acc_vs_n_unit.png}
-    \caption{Caption}
+    \caption{Accuracy of classification against number of units used. ($n_t = 400$, no parameter randomisation }
     \label{fig:acc_vs_n_units}
 \end{figure}
 
