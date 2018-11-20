@@ -88,20 +88,31 @@ This shows qualitatively in Figure \ref{fig:reconstr_faces}: the faces get relia
 
 
 \subsubsection{Part b)}
-Table \ref{tab:NNvsRec} shows the 
+Table \ref{tab:NNvsRec} shows the difference between the two classification methods in terms of accuracy, classification time and memory usage.
 
 \begin{table}[]
     \centering
     \begin{tabular}{c||c c}
          & NN method & Reconstruction method  \\\hline \hline\\
-         Accuracy &  55 \% & 68.5 \% \\
-         Duration of classification & 0.606 s & 1.05 s \\
+         Accuracy &  69.2 \% & 55.8 \% \\
+         Duration of classification & 0.332 s & 0.965 s \\
          Peak memory usage & 104.7 MiB & 94.7 MiB
          
     \end{tabular}
     \caption{Performance comparison of face recognition using the NN method and the reconstruction method}
     \label{tab:NNvsRec}
 \end{table}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{../results/1bb/}
+    \caption{Caption}
+    \label{fig:my_label}
+\end{figure}
+
+\section{Question 2}
+
+
 
 \section{Question 3}
 \subsection{PCA-LDA}
@@ -199,7 +210,7 @@ We generated three different models, using the default parameters ($T = 8, n_t =
 \end{figure}
 
 \subsubsection{Confusion and classification performance}
-The performance of the different fusion rules was tested and plotted in Figure \ref{fig:conf_matrix_ensemble} and \ref{fig:acc_unit_error}, with parameter randomisation and bagging enabled. In this setup, the majority voting rule performed better than both product and mean rules, which both performed equally well. Because of the randomness introduced to the units, it is understandable how the product and mean fusion rules performed less well (more susceptible to noise).  In Figure  
+The performance of the different fusion rules was tested and plotted in Figure \ref{fig:conf_matrix_ensemble} and \ref{fig:acc_unit_error}, with bagging enabled, and parameter randomisation enabled for Figure \ref{fig:conf_matrix_ensemble}. In Figure \ref{fig:acc_unit_error}, the parameter randomisation was alternatively enabled/disabled. When randomisation was enabled, the majority voting rule performed better than both product and mean rules, which both performed equally well. Because of the randomness introduced to the units, it is understandable how the product and mean fusion rules performed less well as they are more susceptible to noise. However, when randomisation was disabled, the product fusion rule proved to perform the best, since the unit outputs were more similar and would be amplified by multiplication. These figures also show that randomness makes the ensemble perform better, making it more robust.
 \begin{figure}
     \centering
     \begin{subfigure}[b]{0.3\textwidth}
@@ -221,11 +232,11 @@ The performance of the different fusion rules was tested and plotted in Figure \
 \end{figure}
 \begin{figure}
     \centering
-    \begin{subfigure}
+    \begin{subfigure}[b]{0.5\textwidth}
         \includegraphics[width=\linewidth]{../results/ex2LDAEnsemble/acc_vs_unit.png}
         \caption{Parameter randomisation enabled}
     \end{subfigure}
-    \begin{subfigure}
+    \begin{subfigure}[b]{0.5\textwidth}
         \includegraphics[width=\linewidth]{../results/ex2LDAEnsemble/acc_vs_unit_no_rand.png}
         \caption{Parameter randomisation disabled}
     \end{subfigure}
