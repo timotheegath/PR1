@@ -136,8 +136,9 @@ if __name__ == '__main__':
     REC_accuracy = []
     NN_durations = []
     REC_durations = []
-    parameter_list = range(10, 363, 20)
-    DISPLAY = False
+    # parameter_list = range(10, 363, 20)
+    parameter_list = [363]
+    DISPLAY = True
     for how_many_eigenvectors in parameter_list:
         NN = True
         # how_many_eigenvectors = -1
@@ -157,12 +158,12 @@ if __name__ == '__main__':
         NN_accuracy.append(acc)
         conf_matrix = confusion_matrix(true_faces, recognised_faces)
         if DISPLAY:
-            plot_confusion_matrix(conf_matrix, classes=np.arange(0, NUMBER_PEOPLE), normalize=True)
+            # plot_confusion_matrix(conf_matrix, classes=np.arange(0, NUMBER_PEOPLE), normalize=True)
             failures = identify_failure(bool_recognised)
 
-            display_eigenvectors(testing_data[:, failures]+ glob_mean[:, None])
+            display_eigenvectors(testing_data[:, failures] + glob_mean[:, None], eig=False)
             success = identify_success(bool_recognised)
-            display_eigenvectors(testing_data[:, success] + glob_mean[:, None])
+            display_eigenvectors(testing_data[:, success] + glob_mean[:, None], eig=False)
         print('Accuracy of', acc)
         # name = 'results_' + 'NN'
         duration = t2 - t1
@@ -190,14 +191,14 @@ if __name__ == '__main__':
         print('Accuracy of', acc)
         # name = 'results_' + 'rec'
         if DISPLAY:
-            plot_confusion_matrix(conf_matrix, classes=np.arange(0, NUMBER_PEOPLE), normalize=True)
+            # plot_confusion_matrix(conf_matrix, classes=np.arange(0, NUMBER_PEOPLE), normalize=True)
 
             failures = identify_failure(bool_recognised)
             # for i in range(NUMBER_PEOPLE):
             #     classy_test_data[:, i * (10 - TRAINING_SPLIT):(i + 1) * (10 - TRAINING_SPLIT)] = classy_test_data[:, i * (10 - TRAINING_SPLIT):(i + 1) * (10 - TRAINING_SPLIT)] + classy_means[i][:, None]
-            display_eigenvectors(classy_test_data[:, failures])
+            display_eigenvectors(classy_test_data[:, failures], eig=False)
             success = identify_success(bool_recognised)
-            display_eigenvectors(classy_test_data[:, success])
+            display_eigenvectors(classy_test_data[:, success], eig=False)
 
 
 
