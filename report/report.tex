@@ -104,12 +104,17 @@ Table \ref{tab:NNvsRec} shows the
 The data was split the same way for PCA-LDA algorithm training, with 70\% used for training and the rest for testing.
 
 \subsubsection{Recognition accuracy}
-Figure \ref{fig:} shows the results of the experiment where the number of retained fisher-faces ($M_{lda}$) is gradually decreased, and the dimension of the PCA subspace ($M_{pca}$) is kept as N-c. We can see that the recognition accuracy worsens as the $M_{lda}$ decreases.
+Figure \ref{fig:mod_params_vs_acc} shows the results of the experiment where the number of retained fisher-faces ($M_{lda}$) is gradually decreased, and the dimension of the PCA subspace ($M_{pca}$) is kept as N-c. We can see that the recognition accuracy worsens as the $M_{lda}$ decreases.
 
 In Figure \ref{fig:} we can see results of decreasing $M_{pca}$ while retaining all the fisherfaces ($c-1$).
 Our results show no particular trend in decreased classification accuracy. This supports the fact that we can learn much better features when applying discriminative, supervised algorithm, making the model more successful in classifying sparse features.
 
-
+\begin{figure}
+    \centering
+    \includegraphics[width = \linewidth]{../results/ex2LDA/accuracy_vs_Ms.png}
+    \caption{Model parameters vs accuracy}
+    \label{fig:mod_params_vs_acc}
+\end{figure}
 
 \subsubsection{Ranks of the scatter matrices}
 The scatter matrices are defined as sums of outer vector products, all of rank 1.
@@ -117,12 +122,19 @@ We confirm that the rank of the within-class-scatter matrix (Sw) is $N - c$. To 
 
 The rank of the between-class-scatter matrix (Sb) is found to be $c - 1$, as expected. Sb is similarly obtained as a sum of matrices obtained from vector outer products with itself. Here, each class-mean vector has the global-mean vector removed, and then expanded into a matrix of rank 1. As before, the global-mean vector is a linear combination of class-mean vectors, which is why we lose one rank, and after summation we end up with the matrix of rank $c - 1$.
 
-\subsubsection{Confusion matrix}
+\subsubsection{Confusion matrix, Success and Failure cases}
 \begin{figure}[htb!]
     \centering
     \includegraphics[width = \linewidth]{../results/ex2LDA/Figure_1.png}
     \caption{Confusion matrix}
     \label{fig:M_LDA_conf_mat}
+\end{figure}
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width = \linewidth]{../results/ex2LDA/LDA_Example_Successes}
+    \caption{Caption}
+    \label{fig:my_label}
 \end{figure}
 
 \subsection{PCA-LDA Ensemble}
