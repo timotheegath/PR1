@@ -105,9 +105,23 @@ Table \ref{tab:NNvsRec} shows the difference between the two classification meth
 
 \begin{figure}
     \centering
-    \includegraphics[width=\linewidth]{../results/1bb/}
-    \caption{Caption}
-    \label{fig:my_label}
+    \includegraphics[width=\linewidth]{../results/1bb/NN_FAIL2.png}
+    \caption{NN Classification Fail Cases}
+    \label{fig:nn_fails}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{../results/1bb/NN_SUCCESS2.png}
+    \caption{NN Classification Success Cases}
+    \label{fig:nn_successes}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{../results/1bb/REC_FAIL2.png}
+    \caption{Fail Cases}
+    \label{fig:nn_fails}
 \end{figure}
 
 \section{Question 2}
@@ -243,6 +257,17 @@ The performance of the different fusion rules was tested and plotted in Figure \
     \caption{Individual unit accuracy and global classification accuracy of the different fusion rules over three different training runs. (T = 8 $n_t = 400$, parameter randomisation enabled/disabled)}
     \label{fig:acc_unit_error}
 \end{figure}
+
+\subsubsection{Influence of number of units}
+The effect of varying the number of units in the ensemble is shown in Figure \ref{fig:acc_vs_n_units}
+
+\begin{figure}
+    \centering
+    \includegraphics{../results/ex2LDAEnsemble/acc_vs_n_unit.png}
+    \caption{Caption}
+    \label{fig:acc_vs_n_units}
+\end{figure}
+
 
 
 %\bibliography{IEEEabrv,./refs}
