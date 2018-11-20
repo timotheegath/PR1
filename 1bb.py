@@ -136,15 +136,18 @@ if __name__ == '__main__':
     REC_accuracy = []
     NN_durations = []
     REC_durations = []
-    # parameter_list = range(10, 363, 20)
+    # parameter_list = range(1, 363, 10)
     parameter_list = [363]
     DISPLAY = True
+    [training_data, testing_data], glob_mean, [classy_train_data, classy_test_data], classy_means = import_processing(
+        INPUT_PATH)
+
     for how_many_eigenvectors in parameter_list:
         NN = True
         # how_many_eigenvectors = -1
-        [training_data, testing_data], glob_mean, [classy_train_data, classy_test_data], classy_means = import_processing(INPUT_PATH)
+
         # if NN:
-            # [training_data, testing_data], means = import_processing(INPUT_PATH)
+        # [training_data, testing_data], means = import_processing(INPUT_PATH)
         eigenvalues, eigenvectors = find_eigenvectors(compute_S(training_data, low_res=True), how_many_eigenvectors)
         eigenvectors = retrieve_low_eigvecs(eigenvectors, training_data)
         projections_training, projections_test = find_projection(eigenvectors, training_data),\
@@ -179,7 +182,7 @@ if __name__ == '__main__':
                                                        low_res=True), -1)
             eigvec = retrieve_low_eigvecs(eigvec, classy_train_data[:, i*TRAINING_SPLIT:(i+1)*TRAINING_SPLIT])
             # no_non_zero = count_non_zero(eigv)
-            eigvec = eigvec[:, :how_many_eigenvectors]
+            # eigvec = eigvec[:, :how_many_eigenvectors]
             classy_eigenvectors.append(eigvec)
         t1 = time.time()
         classifications = classify_Rec(classy_test_data, classy_eigenvectors, classy_means)
@@ -202,8 +205,8 @@ if __name__ == '__main__':
 
 
 
-        duration = t2-t1
-        REC_durations.append(duration)
+            duration = t2-t1
+            REC_durations.append(duration)
 
         name = 'results_' + 'NN_' + 'REC'
         save_values({'NN_accuracy': np.array(NN_accuracy), 'REC_accuracy': np.array(REC_accuracy), 'NN_duration': np.array(NN_durations), 'REC_duration': np.array(REC_durations), 'n_eigenvecs': np.array(parameter_list)}, name=name)
