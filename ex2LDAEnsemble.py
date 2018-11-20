@@ -12,7 +12,7 @@ from in_out import display_eigenvectors, save_values
 
 DEFAULT_WLDA = np.zeros((2576, 1))
 INPUT_PATH = 'data/face.mat'
-parameters = {'split': 7, 'n_units': 25, 'M_PCA': True, 'M_LDA': True, 'bag_size': 400, 'combination': 'maj', 'PCA_reduction': 0, 'LDA_reduction': 0}
+parameters = {'split': 7, 'n_units': 25, 'M_PCA': True, 'M_LDA': True, 'bag_size': 400, 'combination': 'mean', 'PCA_reduction': 0, 'LDA_reduction': 0}
 # A true value for MLDA and MPCA randomizes their values to be between 1/4 and 4/4 of their original value
 # The combination defines how the units' outputs are combined. For now, only mean is implemented but product needs to
 # be implemented
@@ -494,17 +494,18 @@ def create_ground_truth():
 
 if __name__ == '__main__':
 
-    varying_parameter = 'bag_size'
-    parameter_values = np.array([400])
+    varying_parameter = 'n_units'
+    parameter_values = np.arange(2, 20, 4)
 
     training_times = np.zeros_like(parameter_values).astype(np.float32)
     testing_times = np.zeros_like(parameter_values).astype(np.float32)
     accuracies = np.zeros_like(parameter_values).astype(np.float32)
-    repeats = np.zeros((parameter_values.shape[0], parameters['n_units']))
-    M_LDAs = np.zeros((parameter_values.shape[0], parameters['n_units']))
-    M_PCAs = np.zeros((parameter_values.shape[0], parameters['n_units']))
-    bag_size = np.zeros((parameter_values.shape[0], parameters['n_units']))
+    repeats = []
+    M_LDAs = []
+    M_PCAs = []
+    bag_size = []
     cor_mats = []
+    conf_mats = []
 
     for nn in range(parameter_values.shape[0]):
         [training_data, testing_data], means = import_processing(INPUT_PATH)  # Training and Testing data have the
@@ -524,7 +525,8 @@ if __name__ == '__main__':
 
         t_class = time.time()
         conf_matrix = confusion_matrix(g_t, final_class)
-        plot_confusion_matrix(conf_matrix, np.arange(0, NUMBER_PEOPLE), True)
+        conf_mats.append(conf_matrix)
+        # plot_confusion_matrix(conf_matrix, np.arange(0, NUMBER_PEOPLE), True)
         training_times[nn], testing_times[nn] = t_train, t_class-t0
 
         def bool_and_accuracy(ground_truth, prediction):
@@ -535,17 +537,19 @@ if __name__ == '__main__':
 
         _, acc = bool_and_accuracy(g_t, final_class)
         accuracies[nn] = acc
-        repeats[nn] = ensemble.get_repeats()
-        M_LDAs[nn] = ensemble.get_M_LDA()
-        M_PCAs[nn] = ensemble.get_M_PCA()
-        bag_size[nn] = parameters['bag_size']
+        repeats.append(ensemble.get_repeats())
+        M_LDAs.append(ensemble.get_M_LDA())
+        M_PCAs.append(ensemble.get_M_PCA())
+        bag_size.append(parameters['bag_size'])
         print('Accuracy :', accuracies[nn])
         # ensemble.save()
+        # merged_dict = {varying_parameter: parameter_values, 'accuracy': accuracies, 'training_times': training_times,
+        #                'testing_times': testing_times, 'repeats_in_bag':  repeats, 'M_LDA': M_LDAs, 'M_PCA': M_PCAs,
+        #                'bag_size': bag_size, 'corrs': cor_mats, 'conf_mats': np.array(conf_mats)}
         merged_dict = {varying_parameter: parameter_values, 'accuracy': accuracies, 'training_times': training_times,
-                       'testing_times': testing_times, 'repeats_in_bag':  repeats, 'M_LDA': M_LDAs, 'M_PCA': M_PCAs,
-                       'bag_size': bag_size, 'corrs': np.array(cor_mats)}
+                       'testing_times': testing_times, 'conf_mats': np.array(conf_mats)}
         # save_values(merged_dict, 'acc_time_varying_' + varying_parameter + parameters['combination'])
-        save_values(merged_dict, 'acc_time_25_units_' + 'Vary_unit_params' + parameters['combination'])
+        save_values(merged_dict, 'acc_time_' + 'Vary_unit_num ' + parameters['combination'])
 
 
 
