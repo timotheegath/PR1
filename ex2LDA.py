@@ -208,46 +208,66 @@ def bool_and_accuracy(ground_truth, prediction):
     return correct, accuracy
 
 
+def identify_failure(bool_a, number=-1):
+
+    indices = np.argwhere(~bool_a)[:, 0]  # Gives original indices after sorting
+
+    return indices[:number]
+
+
+def identify_success(bool_a, number=-1):
+
+    indices = np.argwhere(bool_a)[:, 0]  # Gives original indices after sorting
+
+    return indices[:number]
+
+
 if __name__ == '__main__':
 
     M_PCAs = []
     accuracies = []
     DISPLAY = True
-    while M_PCA_reduction > -312:
+    # while M_PCA_reduction > -312:
 
-        [training_data, testing_data], means = import_processing(INPUT_PATH)
-        Wpca = reduce_by_PCA(training_data, means)
-        class_means = compute_class_means(training_data)
-        class_scatters = compute_class_scatters(training_data, class_means)
-        Sb = compute_Sb(class_means)
-        SB_RANK =  np.linalg.matrix_rank(Sb)      # Rank is c - 1 -> 51
-        # print(SB_RANK)
-        Sw = compute_Sw(class_scatters)
-        SW_RANK = np.linalg.matrix_rank(Sw)       # Rank is N - c -> 312(train_imgs) - 52 = 260 (same as PCA reduction)
-        # print(SW_RANK)
-        reference_LDA_coeffs, fisherfaces = compute_LDA_Fisherfaces(Sw, Sb, Wpca, training_data)
-        # CHECKED THIS FAR
+    [training_data, testing_data], means = import_processing(INPUT_PATH)
+    Wpca = reduce_by_PCA(training_data, means)
+    class_means = compute_class_means(training_data)
+    class_scatters = compute_class_scatters(training_data, class_means)
+    Sb = compute_Sb(class_means)
+    SB_RANK =  np.linalg.matrix_rank(Sb)      # Rank is c - 1 -> 51
+    # print(SB_RANK)
+    Sw = compute_Sw(class_scatters)
+    SW_RANK = np.linalg.matrix_rank(Sw)       # Rank is N - c -> 312(train_imgs) - 52 = 260 (same as PCA reduction)
+    # print(SW_RANK)
+    reference_LDA_coeffs, fisherfaces = compute_LDA_Fisherfaces(Sw, Sb, Wpca, training_data)
+    # CHECKED THIS FAR
 
-        # fish_images = goto_original_domain(fisherfaces, Wpca)
-        # display_eigenvectors(fish_images)
+    # fish_images = goto_original_domain(fisherfaces, Wpca)
+    # display_eigenvectors(fish_images)
 
-        # ''' Start classification procedure'''
-        candidate_LDA_coeffs = find_fisher_coeffs(testing_data, Wpca, fisherfaces)
-        classification = classify(reference_LDA_coeffs, candidate_LDA_coeffs)
+    # ''' Start classification procedure'''
+    candidate_LDA_coeffs = find_fisher_coeffs(testing_data, Wpca, fisherfaces)
+    classification = classify(reference_LDA_coeffs, candidate_LDA_coeffs)
+    ground_truth = create_ground_truth()
+    bool_array, accuracy = bool_and_accuracy(ground_truth, classification)
 
-        ground_truth = create_ground_truth()
-        conf_matrix = confusion_matrix(ground_truth, classification)
-        if DISPLAY:
-            plot_confusion_matrix(conf_matrix, np.arange(0, NUMBER_PEOPLE), normalize=True)
-        bool_array, accuracy = bool_and_accuracy(ground_truth, classification)
+    failures = identify_failure(bool_array)
+    success = identify_success(bool_array)
 
-        print(accuracy)
+    conf_matrix = confusion_matrix(ground_truth, classification)
+    if DISPLAY:
+        plot_confusion_matrix(conf_matrix, np.arange(0, NUMBER_PEOPLE), normalize=True)
+        display_eigenvectors(testing_data[:, failures] + means[0][:, None])
+        display_eigenvectors(testing_data[:, success] + means[0][:, None])
 
-        accuracies.append(accuracy)
-        M_PCAs.append(M_PCA)
-        save_dict = {'accuracy': accuracies, 'training_split': TRAINING_SPLIT, 'M_PCA': M_PCAs, 'M_LDA': M_LDA,
-                     'Sb_rank': SB_RANK, 'Sw_rank': SW_RANK}
-        save_name = 'split_{}m_lda{}VARY_M_PCA'.format(TRAINING_SPLIT, M_LDA)
-        save_values(save_dict, name=save_name)
 
-        M_PCA_reduction -= 15
+    print(accuracy)
+
+    accuracies.append(accuracy)
+    M_PCAs.append(M_PCA)
+    save_dict = {'accuracy': accuracies, 'training_split': TRAINING_SPLIT, 'M_PCA': M_PCAs, 'M_LDA': M_LDA,
+                 'Sb_rank': SB_RANK, 'Sw_rank': SW_RANK}
+    save_name = 'split_{}m_lda{}VARY_M_PCA'.format(TRAINING_SPLIT, M_LDA)
+    save_values(save_dict, name=save_name)
+
+        # M_PCA_reduction -= 15
