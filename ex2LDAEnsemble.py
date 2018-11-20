@@ -12,7 +12,9 @@ from in_out import display_eigenvectors, save_values
 
 DEFAULT_WLDA = np.zeros((2576, 1))
 INPUT_PATH = 'data/face.mat'
-parameters = {'split': 7, 'n_units': 25, 'M_PCA': True, 'M_LDA': True, 'bag_size': 400, 'combination': 'maj', 'PCA_reduction': 0, 'LDA_reduction': 0}
+
+parameters = {'split': 7, 'n_units': 8, 'M_PCA': False, 'M_LDA': False, 'bag_size': 400, 'combination': 'product', 'PCA_reduction': 0, 'LDA_reduction': 0}
+
 # A true value for MLDA and MPCA randomizes their values to be between 1/4 and 4/4 of their original value
 # The combination defines how the units' outputs are combined. For now, only mean is implemented but product needs to
 # be implemented
@@ -149,9 +151,10 @@ class Ensemble():
 
     def classify(self, test_data):
         p_distrib = np.zeros((self.n, NUMBER_PEOPLE, test_data.shape[1]))
+        unit_guess = np.zeros((self.n, test_data.shape[1]))
         for i, u in enumerate(self.units):
 
-            p_distrib[i] = u.classify(test_data)
+            p_distrib[i], unit_guess[i] = u.classify(test_data)
         self.outputs = np.copy(p_distrib)
 
         if parameters['combination'] is 'mean':
@@ -160,7 +163,7 @@ class Ensemble():
             p_distrib /= np.sum(p_distrib, axis=0, keepdims=True)
             final_class = np.argmax(p_distrib, axis=0)
 
-            return final_class
+            return final_class, unit_guess
 
         elif parameters['combination'] is 'product':
 
@@ -168,17 +171,18 @@ class Ensemble():
             p_distrib /= np.sum(p_distrib, axis=0, keepdims=True)
             final_class = np.argmax(p_distrib, axis=0)
 
-            return final_class
+            return final_class, unit_guess
 
         elif parameters['combination'] is 'maj':
 
-            votes = np.argmax(1 - p_distrib, axis=1)
-            classes, counts = np.unique(votes, return_counts=True, axis=0)
-            print(classes.shape)
-            winning_index = np.argmax(counts, axis=0)
-            winning_class = classes[winning_index]
+            votes = np.argmax(1 - p_distrib, axis=1) # n_units * test_data
+            winning_class = np.zeros(votes.shape[1])
+            for t in range(votes.shape[1]):
+                classes, counts = np.unique(votes[:, t], return_counts=True)
+                winning_index = np.argmax(counts, axis=0)
+                winning_class[t] = classes[winning_index]
 
-            return winning_class
+            return winning_class, unit_guess
 
 
 
@@ -382,7 +386,8 @@ class Unit():
                 distances[c, i] = np.min(np.linalg.norm(reduced_face - LDA_coeffs[:, i][:, None], axis=0))
 
         distances = distances/np.max(distances, axis=0, keepdims=True)
-        return distances
+        unit_guess = np.argmin(distances, axis=0)
+        return distances, unit_guess
 
 
 class Dataset():
@@ -493,20 +498,34 @@ def create_ground_truth():
 
 
 if __name__ == '__main__':
+    def bool_and_accuracy(ground_truth, prediction, unit_guess):
+        correct = ground_truth == prediction
+        # unit_guess : n_units * test_shape
+        unit_correct = (ground_truth[None] == unit_guess).astype(np.uint8)
+
+        accuracy = (correct[correct].shape[0]) / (ground_truth.shape[0])
+
+        counts = np.sum(unit_correct, axis=1)
+
+        unit_accuracy = counts / ground_truth.shape[0]  # dim : n_units X 1
+
+        return correct, accuracy, unit_accuracy
 
     varying_parameter = 'n_units'
-    parameter_values = np.arange(2, 30, 4)
+
+    parameter_values = np.array([8, 8, 8])
 
     training_times = np.zeros_like(parameter_values).astype(np.float32)
     testing_times = np.zeros_like(parameter_values).astype(np.float32)
-    accuracies = np.zeros_like(parameter_values).astype(np.float32)
+    accuracies = np.zeros((parameter_values.shape[0], 3)).astype(np.float32)
     repeats = []
     M_LDAs = []
     M_PCAs = []
     bag_size = []
     cor_mats = []
     conf_mats = []
-
+    unit_acc = []
+    CHANGE_FUSION = True
     for nn in range(parameter_values.shape[0]):
         [training_data, testing_data], means = import_processing(INPUT_PATH)  # Training and Testing data have the
         # training mean removed
@@ -520,36 +539,40 @@ if __name__ == '__main__':
         t_train = T_TRAINING
 
         t0 = time.time()
-        final_class = ensemble.classify(testing_data)
+        if CHANGE_FUSION:
+            for i, fusion in enumerate(['mean', 'product', 'maj']):
+                parameters['combination'] = fusion
+                final_class, unit_guess = ensemble.classify(testing_data)
+                _, acc, unit_accuracy = bool_and_accuracy(g_t, final_class, unit_guess)
+                accuracies[nn, i] = acc
+                conf_matrix = confusion_matrix(g_t, final_class)
+                conf_mats.append(conf_matrix)
+                # plot_confusion_matrix(conf_matrix, np.arange(0, NUMBER_PEOPLE), True)
+        unit_acc.append(unit_accuracy)
         cor_mats.append(ensemble.units_correlation())
 
         t_class = time.time()
-        conf_matrix = confusion_matrix(g_t, final_class)
-        conf_mats.append(conf_matrix)
-        # plot_confusion_matrix(conf_matrix, np.arange(0, NUMBER_PEOPLE), True)
+
         training_times[nn], testing_times[nn] = t_train, t_class-t0
 
-        def bool_and_accuracy(ground_truth, prediction):
-            correct = ground_truth == prediction
-            accuracy = (correct[correct].shape[0]) / (ground_truth.shape[0])
 
-            return correct, accuracy
 
-        _, acc = bool_and_accuracy(g_t, final_class)
-        accuracies[nn] = acc
+
+
         repeats.append(ensemble.get_repeats())
         M_LDAs.append(ensemble.get_M_LDA())
         M_PCAs.append(ensemble.get_M_PCA())
         bag_size.append(parameters['bag_size'])
         print('Accuracy :', accuracies[nn])
+        print('Unit_accuracy :', unit_accuracy)
         # ensemble.save()
         # merged_dict = {varying_parameter: parameter_values, 'accuracy': accuracies, 'training_times': training_times,
         #                'testing_times': testing_times, 'repeats_in_bag':  repeats, 'M_LDA': M_LDAs, 'M_PCA': M_PCAs,
         #                'bag_size': bag_size, 'corrs': cor_mats, 'conf_mats': np.array(conf_mats)}
         merged_dict = {varying_parameter: parameter_values, 'accuracy': accuracies, 'training_times': training_times,
-                       'testing_times': testing_times, 'conf_mats': np.array(conf_mats)}
+                       'testing_times': testing_times, 'unit_accuracy': np.array(unit_acc), 'conf_mats': np.array(conf_mats)}
         # save_values(merged_dict, 'acc_time_varying_' + varying_parameter + parameters['combination'])
-        save_values(merged_dict, 'acc_time_' + 'Vary_unit_num ' + parameters['combination'])
+        save_values(merged_dict, 'acc_time_' + 'unit_error_analysis_no_rand')
 
 
 

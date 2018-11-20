@@ -17,9 +17,10 @@ The abstract
 \subsubsection{Part a)}
 The faces dataset consisted of 10 pictures for each of the 52 different individuals. Hence, it was decided to split the data into 7 pictures per individual for training and 3 pictures per individual for testing, resulting in a total of 364 training images. This allowed to train the PCA algorithm on all available classes and run meaningful tests on all images. Moreover, the order of pictures per individual was randomised before to remove any possible correlation between the complexity/characteristics of the pictures and their order, hinted by previous experiments. We found that with the added random component, overall, the classification accuracy improved from the initial experiments where first 7  pictures per individual were taken as the training set.
 
-Standard PCA was performed and the eigenfaces in Figure \ref{fig:eigfaces1} were found, along with the eigenvalues in Figure \ref{fig:eigvals1}. The data was normalised by subtracting the mean face shown in Figure \ref{fig:mean_im1}. In order to identify relevant principal components, the eigenvalues of the covariance matrix with a real part lower than 0.1 were discarded (the number was chosen by inspection). 363 ($N - 1$) eigenfaces and eigenvalues remained after this thresholding operation, meaning that 363 eigenfaces were relevant to optimally reduce the dimensionality of the data. Notably, for $N$ training samples, the number of relevant eigenvalues was found to be $N - 1$. This is expected, since the largest vector subspace that can be defined with N points is $R^{N-1}$.
+Standard PCA was performed and the eigenfaces in Figure \ref{fig:eigfaces1} were found, along with the eigenvalues in Figure \ref{fig:eigvals1}. The data was normalised by subtracting the mean face shown in Figure \ref{fig:mean_im1}. In order to identify relevant principal components, the eigenvalues of the covariance matrix with a real part lower than 0.1 were discarded (the number was chosen by inspection). 363 ($N - 1$) eigenfaces and eigenvalues remained after this thresholding operation, meaning that 363 eigenfaces were relevant to optimally reduce the dimensionality of the data. Notably, for $N$ training samples, the number of relevant eigenvalues was found to be $N - 1$. This is expected, since the mean image is removed, the largest vector subspace that can be defined with N points is $R^{N-1}$.
 % How do you choose how many eigenvectors you'll actually keep ?
-
+The eigenfaces (eigenvectors) with larger eigenvalues represent the most varied features of the training images (or the projection directions with the largest data scatter). Hence, the eigenvectors with larger eigenvalues will be more important for NN classification.
+The plot of accuracy vs the number of retained eigenfaces is shown in Figure \ref{fig:}. We can see the accuracy improves significantly at first and then less with addition of the less important eigenfaces, which is what we expect.
 
 
 \begin{figure}[htb!]
@@ -44,9 +45,9 @@ Standard PCA was performed and the eigenfaces in Figure \ref{fig:eigfaces1} were
 \end{figure}
 
 \subsubsection{Part b)}
-The low-dimensional computation returns as expected $N - 1$ eigenvalues and eigenvectors which we then compare to the original ones from Part b) in Figure \ref{fig:eig_diff1}. We can notice that there is no difference in the eigenvalue's values as well as the eigenvector's directions (by normalising them and taking their dot product). 
-The low-dimensional computation proved to be 72 times faster than the standard computation, even though it involved more steps, since the dimensionality of the matrix from which the eigenvectors were computed was lower. 
-% What's a con of this method ?
+The low-dimensional computation returns, as expected, $N - 1$ eigenvalues and eigenvectors which we then compare to the original ones from Part b) in Figure \ref{fig:eig_diff1}. We can notice that there is no difference between the eigenvalues obtained from high-dimensional and low-dimensional computation. We also compare the eigenvectors' directions by normalising them and taking their dot product (cosine similarity). We can see in the bottom plot that the new eigenvectors have the same direction as before. 
+The low-dimensional computation proved to be 72 times faster than the standard computation, even though it involved more steps, since the dimensionality of the matrix from which the eigenvectors were computed was lower.
+% What's a con of this method ? Vector normalization?
 \begin{figure}[htb!]
     \centering
     \includegraphics[width=\linewidth]{../results/ex1b/DIfference_eig.png}
@@ -56,9 +57,9 @@ The low-dimensional computation proved to be 72 times faster than the standard c
 
 \subsection{Application of eigenfaces}
 \subsubsection{Part a)}
-The training data was used to find the eigenfaces. The testing data was projected in the eigenspace, and it was attempted to reconstruct it by using a lower or equal amount of eigenfaces.
+The training data was used to find the eigenfaces. The testing data was projected in the PCA subspace, and it was attempted to reconstruct the test images as the number of retained eigenfaces was increased (until $N - 1$).
 
-Quantitatively, the distortion (reconstruction error) is ever decreasing as the number of eigenvectors used for reconstruction increases, as shown in Figure \ref{fig:distortion}. However, the improvement gets slower as the number of eigenvectors increases, hinting that the full number of eigenvectors is not necessary to achieve a 'good-enough' reconstruction. As expected, when the full number of eigenvectors is used, the reconstruction is perfect (distortion of the order of $10^{-19}$)
+Quantitatively, the distortion (reconstruction error) is ever decreasing as the number of eigenvectors used for reconstruction increases, as shown in Figure \ref{fig:distortion}. However, the improvement gets slower as the number of eigenvectors increases, hinting that the full number of eigenvectors is not necessary to achieve a 'good-enough' reconstruction. As expected, when the full number of eigenvectors ($N - 1$) is used, the reconstruction is perfect (distortion of the order of $10^{-19}$)
 
 This shows qualitatively in Figure \ref{fig:reconstr_faces}: the faces get reliably recognisable with around $M =150$ eigenvectors, whereas complex shadowing details appear only when more eigenfaces are used.
 \begin{figure}[htb!]
@@ -84,6 +85,7 @@ This shows qualitatively in Figure \ref{fig:reconstr_faces}: the faces get relia
     \caption{Reconstructed faces, M indicates the number of eigenvectors used}
     \label{fig:reconstr_faces}
 \end{figure}
+
 
 \subsubsection{Part b)}
 Table \ref{tab:NNvsRec} shows the 
@@ -187,34 +189,48 @@ The role of $M_{PCA}^t$ and $M_{LDA}^t$ was investigated by varying their value 
 \end{figure}
 
 \subsubsection{Randomness and correlation}
-We generated three different models, using the default parameters ($T = 8, n_t = 400$). In Figure \ref{fig:corrs}, the leftmost model was generated without using bagging (so using a fixed training data), and with default $M_{LDA}$ and $M_{PCA}$ values. As expected, all 8 units are fully correlated. We then introduce a first element of randomness by randomising $M_{LDA}$ and $M_{PCA}$ uniformly between a fourth of their default value and their default value, leading to the second correlation matrix. Finally, we add bagging to the algorithm and get the strongly decorrelated model, represented by the third correlation matrix.  
+We generated three different models, using the default parameters ($T = 8, n_t = 400$). In Figure \ref{fig:corrs}, the leftmost model was generated without using bagging (so using a fixed training data), and with default $M_{LDA}$ and $M_{PCA}$ values. As expected, all 8 units are fully correlated. We then introduce a first element of randomness by randomising $M_{LDA}$ and $M_{PCA}$ uniformly between a fourth of their default value and their default value (parameter randomisation), leading to the second correlation matrix. Finally, we add bagging to the algorithm and get the strongly decorrelated model, represented by the third correlation matrix.  
 
 \begin{figure}[htb!]
     \centering
     \includegraphics[width=\linewidth]{../results/ex2LDAEnsemble/correlation.png}
-    \caption{Correlation matrix between the units. $T = 8$. The more randomness is introduced to the model, the more decorrelated the model (from left to right). (fusion: product, T = 8, $n_t$ = 400}
+    \caption{Correlation matrix between the units. $T = 8$. The more randomness is introduced to the model, the more decorrelated the model (from left to right). (fusion: product, T = 8, $n_t$ = 400)}
     \label{fig:corrs}
 \end{figure}
 
 \subsubsection{Confusion and classification performance}
-
+The performance of the different fusion rules was tested and plotted in Figure \ref{fig:conf_matrix_ensemble} and \ref{fig:acc_unit_error}, with parameter randomisation and bagging enabled. In this setup, the majority voting rule performed better than both product and mean rules, which both performed equally well. Because of the randomness introduced to the units, it is understandable how the product and mean fusion rules performed less well (more susceptible to noise).  In Figure  
 \begin{figure}
     \centering
     \begin{subfigure}[b]{0.3\textwidth}
         \includegraphics[width=\textwidth]{../results/ex2LDAEnsemble/conf_matrix_rand_mean.png}
-        \caption{Mean fusion, default parameters}
+        \caption{Mean fusion. Overall accuracy: 87.2 \% }
     \end{subfigure}    
     \begin{subfigure}[b]{0.3\textwidth}
         \includegraphics[width=\textwidth]{../results/ex2LDAEnsemble/conf_matrix_rand.png}
-        \caption{Product fusion, default parameters}
+        \caption{Product fusion. Overall accuracy: 87.8 \%}
     \end{subfigure}  
     \begin{subfigure}[b]{0.3\textwidth}
         \includegraphics[width=\textwidth]{../results/ex2LDAEnsemble/all_rand_maj_conf.png}
-        \caption{Majority voting fusion, default parameters}
+        \caption{Majority voting fusion. Overall accuracy: 90.0\%}
     \end{subfigure}    
+    
+    \caption{Confusion matrices for different fusion rules, T=8, $n_t = 400$, randomisation of parameters}
     \label{fig:conf_matrix_ensemble}
     
-    
+\end{figure}
+\begin{figure}
+    \centering
+    \begin{subfigure}
+        \includegraphics[width=\linewidth]{../results/ex2LDAEnsemble/acc_vs_unit.png}
+        \caption{Parameter randomisation enabled}
+    \end{subfigure}
+    \begin{subfigure}
+        \includegraphics[width=\linewidth]{../results/ex2LDAEnsemble/acc_vs_unit_no_rand.png}
+        \caption{Parameter randomisation disabled}
+    \end{subfigure}
+    \caption{Individual unit accuracy and global classification accuracy of the different fusion rules over three different training runs. (T = 8 $n_t = 400$, parameter randomisation enabled/disabled)}
+    \label{fig:acc_unit_error}
 \end{figure}
 
 
