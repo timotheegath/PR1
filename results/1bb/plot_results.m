@@ -1,16 +1,16 @@
 clear all, close all
-load('results_NN_REC_vs_eigenvecs');
+load('results_NN_vs_eig_faces');
 
 
 figure()
 plot(n_eigenvecs, NN_accuracy * 100)
 grid on
-hold on
-plot(n_eigenvecs, REC_accuracy * 100)
+%hold on
+%plot(n_eigenvecs, REC_accuracy * 100)
 
-xlabel('Number of eigenvectors used')
+xlabel('Number of eigenfaces used')
 ylabel('Accuracy (%)')
-legend('NN', 'Reconstruction')
+%legend('NN', 'Reconstruction')
 
 figure()
 plot(n_eigenvecs, NN_duration)
