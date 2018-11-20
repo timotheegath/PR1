@@ -1,16 +1,14 @@
 \documentclass[10pt,technote]{IEEEtran}
 \usepackage{amssymb}
-
+\usepackage{amsmath}
 \usepackage{graphicx}
 \usepackage{subcaption}
 \title{Coursework 1: Face recognition }
-\author{TGATH LLAG}
+\author{Timothee Gathmann, Luka Lagator}
 \begin{document}
 
 \maketitle
-\begin{abstract}
-The abstract
-\end{abstract}
+
 
 \section{Question 1}
 \subsection{Eigenfaces}
@@ -88,8 +86,10 @@ This shows qualitatively in Figure \ref{fig:reconstr_faces}: the faces get relia
 
 
 \subsubsection{Part b)}
+Here we compare the performance of our model with two different classification methods. The Near Neighbour (NN) classification assigns the class of the nearest reference coefficient for each test image projected onto the PCA subspace. In classification by reconstruction, we first learn a different PCA subspace for each class (trained on images belonging to the class) and then project the test image onto each classes subspace. We then obtain 52 reconstructed images using the coefficients obtained from each class and finally assign the class with minimum reconstruction error when compared to the test image.
 Table \ref{tab:NNvsRec} shows the difference between the two classification methods in terms of accuracy, classification time and memory usage.
-Figures 
+Figures 7-10 show example success and failure cases for both methods of classification. Figures 11 and 12 show the confusion matrices for NN classification and classification by reconstruction respectively.
+Both confusion matrices show a tendency to miss-classify the test images as particular classes. These particular classes(persons) seem to share similar features to many others. In this case the reconstruction method appears to perform worse. By learning a different subspace for each class, classes that share similar features (eigenfaces) produce similar coefficients and reconstruction errors, where these coefficients are weighted and summed (reinforcing class similarity). Conversely, the NN classification assigns nearest reference coefficient's class, regardless of the distance to other coefficients belonging to the class.
 
 \begin{table}[]
     \centering
@@ -104,33 +104,7 @@ Figures
     \label{tab:NNvsRec}
 \end{table}
 
-\begin{figure}[htb!]
-    \centering
-    \includegraphics[width=\linewidth]{../results/1bb/NN_FAIL2_cropped.png}
-    \caption{NN Classification Fail Cases}
-    \label{fig:nn_fails}
-\end{figure}
 
-\begin{figure}[htb!]
-    \centering
-    \includegraphics[width=\linewidth]{../results/1bb/NN_SUCCESS2_cropped.png}
-    \caption{NN Classification Success Cases}
-    \label{fig:nn_successes}
-\end{figure}
-
-\begin{figure}[htb!]
-    \centering
-    \includegraphics[width=\linewidth]{../results/1bb/REC_FAIL2_cropped.png}
-    \caption{Classification by Reconstruction Fail Cases}
-    \label{fig:rec_fails}
-\end{figure}
-
-\begin{figure}[htb!]
-    \centering
-    \includegraphics[width=\linewidth]{../results/1bb/REC_SUCCESS2_cropped.png}
-    \caption{Classification by Reconstruction Success Cases}
-    \label{fig:rec_successes}
-\end{figure}
 
 \begin{figure}[htb!]
     \centering
@@ -148,6 +122,25 @@ Figures
 
 \section{Question 2}
 
+PCA and LDA are opposed by their nature. The generative characteristic of PCA is achieved by maximising the scatter of all, unlabelled data-points ($S_T$). On the other hand, the discriminative characteristic of LDA is achieved by maximising the scatter between data points of different labels ($S_B$), and keeping the scatter within a class ($S_W$) constant. Hence, the goals of each of them are diametrically opposed and cannot be satisfied simultaneously.
+
+Looking at the LDA criterion function:
+\begin{equation}
+    J(\boldsymbol{W_{LDA}}) = \frac{\boldsymbol{W_{LDA}}^T\boldsymbol{S}_B\boldsymbol{W_{LDA}}}{\boldsymbol{W_{LDA}}^T\boldsymbol{S}_W\boldsymbol{W_{LDA}}}
+\end{equation}
+Which we seek to maximise, while for PCA:
+\begin{equation}
+    J(\boldsymbol{W_{PCA}}) = |\boldsymbol{W_{PCA}}^T\boldsymbol{S}_T\boldsymbol{W_{PCA}}|
+\end{equation}
+Which we also which to maximise
+Notably, maximising $S_T$ results in maximising $S_W$ and $S_B$ as a consequence, due to their intrinsic definition.
+
+However, one way a trade-off could be achieved would be by finding a middle ground during the optimisation procedure. We can maximise the criterion 
+\begin{equation}
+    J(\boldsymbol{W_{opt}}) = \frac{\boldsymbol{W}^T(\alpha\boldsymbol{S}_T + (1 - \alpha)\boldsymbol{S}_B)\boldsymbol{W}}{\boldsymbol{W}^T\boldsymbol{S}_W\boldsymbol{W}}
+\end{equation}
+with $0 \le \alpha \le 1$, a parameter that would control the trade-off between both scatter matrices. A high value of alpha would encourage the generative side of our $W_{opt}$ while a low value would encourage its discriminative side. 
+The optimisation procedure then follows in the same steps as in the slides, using a Lagrangian multiplier to keep the denominator constant.
 
 
 \section{Question 3}
@@ -284,15 +277,47 @@ The performance of the different fusion rules was tested and plotted in Figure \
 The effect of varying the number of units in the ensemble is shown in Figure \ref{fig:acc_vs_n_units}
 
 \begin{figure}
+
     \centering
-    \includegraphics{../results/ex2LDAEnsemble/acc_vs_n_unit.png}
+    \includegraphics[width=\linewidth]{../results/ex2LDAEnsemble/acc_vs_n_unit.png}
     \caption{Accuracy of classification against number of units used. ($n_t = 400$, no parameter randomisation }
     \label{fig:acc_vs_n_units}
 \end{figure}
+\begin{figure}
+
+    \centering
+    \includegraphics[width=\linewidth]{../results/ex2LDAEnsemble/acc_vs_n_unit_rand.png}
+    \caption{Accuracy of classification against number of units used. ($n_t = 400$, with parameter randomisation }
+    \label{fig:acc_vs_n_units_rand}
+\end{figure}
 
 
+\section{Appendix}
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=\linewidth]{../results/1bb/NN_FAIL2_cropped.png}
+    \caption{NN Classification Fail Cases}
+    \label{fig:nn_fails}
+\end{figure}
 
-%\bibliography{IEEEabrv,./refs}
-%\bibliographystyle{IEEEtran}
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=\linewidth]{../results/1bb/NN_SUCCESS2_cropped.png}
+    \caption{NN Classification Success Cases}
+    \label{fig:nn_successes}
+\end{figure}
 
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=\linewidth]{../results/1bb/REC_FAIL2_cropped.png}
+    \caption{Classification by Reconstruction Fail Cases}
+    \label{fig:rec_fails}
+\end{figure}
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=\linewidth]{../results/1bb/REC_SUCCESS2_cropped.png}
+    \caption{Classification by Reconstruction Success Cases}
+    \label{fig:rec_successes}
+\end{figure}
 \end{document}
